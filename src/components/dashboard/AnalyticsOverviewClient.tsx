@@ -169,7 +169,10 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
                                     transition: "background 0.15s ease",
                                     gap: "8px",
                                 }}
-                                onMouseEnter={(e) => { e.currentTarget.style.background = "#fafbfc"; }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = "#fafbfc";
+                                    router.prefetch(`/analytics/${link.id}`);
+                                }}
                                 onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                             >
                                 <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0, flex: 1 }}>

@@ -209,7 +209,11 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                     <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}
                                         onClick={() => router.push(`/analytics/${link.id}`)}
                                         style={iconBtnStyle}
-                                        onMouseEnter={(e) => { e.currentTarget.style.background = "#f1f5f9"; e.currentTarget.style.color = "#0f172a"; }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.background = "#f1f5f9";
+                                            e.currentTarget.style.color = "#0f172a";
+                                            router.prefetch(`/analytics/${link.id}`);
+                                        }}
                                         onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94a3b8"; }}
                                     >
                                         <BarChart3 size={16} />

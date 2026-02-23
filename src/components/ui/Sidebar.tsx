@@ -58,7 +58,7 @@ export default function Sidebar() {
                                 : pathname.startsWith(item.href);
 
                         return (
-                            <Link key={item.href} href={item.href} style={{ textDecoration: "none" }}>
+                            <Link key={item.href} href={item.href} prefetch={true} style={{ textDecoration: "none" }}>
                                 <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} className="relative group">
                                     <div
                                         style={{
@@ -139,7 +139,7 @@ export default function Sidebar() {
                             : pathname.startsWith(item.href);
 
                     return (
-                        <Link key={item.href} href={item.href} style={{ textDecoration: "none" }}>
+                        <Link key={item.href} href={item.href} prefetch={true} style={{ textDecoration: "none" }}>
                             <motion.div whileTap={{ scale: 0.9 }}>
                                 <div
                                     style={{

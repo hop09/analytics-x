@@ -70,19 +70,15 @@ export async function deleteLink(id: string): Promise<{ error: string | null }> 
 }
 
 export async function getLinkWithStats(id: string): Promise<{ link: Link | null; stats: LinkStats | null }> {
-    const { data: link, error: linkError } = await supabaseAdmin
-        .from("links")
-        .select("*")
-        .eq("id", id)
-        .single();
+    const [
+        { data: link, error: linkError },
+        { data: clicks }
+    ] = await Promise.all([
+        supabaseAdmin.from("links").select("*").eq("id", id).single(),
+        supabaseAdmin.from("clicks").select("*").eq("link_id", id).order("created_at", { ascending: false })
+    ]);
 
     if (linkError || !link) return { link: null, stats: null };
-
-    const { data: clicks } = await supabaseAdmin
-        .from("clicks")
-        .select("*")
-        .eq("link_id", id)
-        .order("created_at", { ascending: false });
 
     const allClicks = clicks || [];
     const humanClicks = allClicks.filter((c) => !c.is_bot);
@@ -128,23 +124,17 @@ export async function getLinkWithStats(id: string): Promise<{ link: Link | null;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
-    const { count: totalLinks } = await supabaseAdmin
-        .from("links")
-        .select("*", { count: "exact", head: true });
-
-    const { count: totalClicks } = await supabaseAdmin
-        .from("clicks")
-        .select("*", { count: "exact", head: true });
-
-    const { count: humanClicks } = await supabaseAdmin
-        .from("clicks")
-        .select("*", { count: "exact", head: true })
-        .eq("is_bot", false);
-
-    const { count: botClicks } = await supabaseAdmin
-        .from("clicks")
-        .select("*", { count: "exact", head: true })
-        .eq("is_bot", true);
+    const [
+        { count: totalLinks },
+        { count: totalClicks },
+        { count: humanClicks },
+        { count: botClicks },
+    ] = await Promise.all([
+        supabaseAdmin.from("links").select("*", { count: "exact", head: true }),
+        supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }),
+        supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("is_bot", false),
+        supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("is_bot", true),
+    ]);
 
     return {
         total_clicks: totalClicks || 0,

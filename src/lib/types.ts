@@ -4,7 +4,7 @@ export interface Link {
     original_url: string;
     custom_title: string | null;
     custom_image_url: string | null;
-    alt_page_content: string | null;
+    alt_page_url: string | null;
     created_at: string;
 }
 

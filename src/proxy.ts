@@ -6,6 +6,7 @@ const RESERVED_PATHS = [
     "/links",
     "/analytics",
     "/settings",
+    "/docs",
     "/_next",
     "/favicon.ico",
     "/robots.txt",

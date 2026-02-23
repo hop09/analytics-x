@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { X, Link2, Type, Image, FileText, Wand2 } from "lucide-react";
+import { X, Link2, Type, ImageIcon, Globe, Wand2 } from "lucide-react";
 import { useState } from "react";
 import { createLink } from "@/lib/actions";
 import { generateShortCode } from "@/lib/utils";
@@ -16,7 +16,7 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
     const [shortCode, setShortCode] = useState("");
     const [customTitle, setCustomTitle] = useState("");
     const [customImageUrl, setCustomImageUrl] = useState("");
-    const [altPageContent, setAltPageContent] = useState("");
+    const [altPageUrl, setAltPageUrl] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -41,7 +41,7 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
             original_url: originalUrl.trim(),
             custom_title: customTitle.trim() || undefined,
             custom_image_url: customImageUrl.trim() || undefined,
-            alt_page_content: altPageContent.trim() || undefined,
+            alt_page_url: altPageUrl.trim() || undefined,
         });
 
         setLoading(false);
@@ -54,49 +54,18 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
         onSuccess();
     };
 
-    const inputStyle: React.CSSProperties = {
-        width: "100%",
-        height: "44px",
-        padding: "0 16px",
-        background: "#f8fafc",
-        border: "1px solid #e2e8f0",
-        borderRadius: "12px",
-        fontSize: "13px",
-        color: "#0f172a",
-        outline: "none",
-        transition: "all 0.2s ease",
-        fontFamily: "inherit",
-    };
-
-    const labelStyle: React.CSSProperties = {
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        marginBottom: "8px",
-    };
+    const inputClasses = "w-full h-12 px-4 bg-surface/50 border border-border rounded-xl focus:outline-none focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 text-sm text-text-primary placeholder:text-text-muted/50 transition-all font-mono";
+    const labelClasses = "flex items-center gap-2 mb-2 text-[11px] font-bold text-text-secondary uppercase tracking-wider";
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            style={{
-                position: "fixed",
-                inset: 0,
-                zIndex: 100,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "16px",
-            }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4"
         >
             <div
-                style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "rgba(15,23,42,0.3)",
-                    backdropFilter: "blur(8px)",
-                }}
+                className="absolute inset-0 bg-background/80 backdrop-blur-sm"
                 onClick={onClose}
             />
 
@@ -105,52 +74,28 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95, y: 10 }}
                 transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
-                style={{
-                    position: "relative",
-                    width: "100%",
-                    maxWidth: "480px",
-                    background: "#ffffff",
-                    borderRadius: "20px",
-                    boxShadow: "0 20px 60px rgba(0,0,0,0.15), 0 4px 16px rgba(0,0,0,0.08)",
-                    overflow: "hidden",
-                }}
+                className="relative w-full max-w-[480px] glass-panel bg-surface border-border rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
             >
-                <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    padding: "20px 24px",
-                    borderBottom: "1px solid #f1f5f9",
-                }}>
-                    <h2 style={{ fontSize: "16px", fontWeight: 700, color: "#0f172a" }}>Create Short Link</h2>
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-indigo-500/20 blur-[40px] rounded-full pointer-events-none" />
+
+                <div className="flex items-center justify-between p-6 border-b border-border/50 relative z-10 shrink-0">
+                    <h2 className="text-xl font-bold text-text-primary tracking-tight">Create Short Link</h2>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={onClose}
-                        style={{
-                            width: "32px",
-                            height: "32px",
-                            borderRadius: "10px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            border: "none",
-                            cursor: "pointer",
-                            background: "#f1f5f9",
-                            color: "#64748b",
-                            transition: "all 0.15s ease",
-                        }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center bg-surface-hover text-text-muted hover:text-text-primary transition-colors border border-transparent hover:border-border"
                     >
                         <X size={16} />
                     </motion.button>
                 </div>
 
-                <form onSubmit={handleSubmit} style={{ padding: "20px 24px" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div className="overflow-y-auto w-full custom-scrollbar flex-1">
+                    <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5 relative z-10 w-full">
                         <div>
-                            <div style={labelStyle}>
-                                <Link2 size={14} style={{ color: "#94a3b8" }} />
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>Destination URL</span>
+                            <div className={labelClasses}>
+                                <Link2 size={14} className="text-indigo-400" />
+                                <span>Destination URL</span>
                             </div>
                             <input
                                 type="url"
@@ -158,147 +103,96 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
                                 onChange={(e) => setOriginalUrl(e.target.value)}
                                 placeholder="https://example.com/your-long-url"
                                 required
-                                style={inputStyle}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(148,163,184,0.15)"; e.currentTarget.style.background = "#ffffff"; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#f8fafc"; }}
+                                className={inputClasses}
                             />
                         </div>
 
                         <div>
-                            <div style={labelStyle}>
-                                <Wand2 size={14} style={{ color: "#94a3b8" }} />
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>Short Code</span>
+                            <div className={labelClasses}>
+                                <Wand2 size={14} className="text-purple-400" />
+                                <span>Short Code</span>
                             </div>
-                            <div style={{ display: "flex", gap: "8px" }}>
+                            <div className="flex gap-2">
                                 <input
                                     type="text"
                                     value={shortCode}
                                     onChange={(e) => setShortCode(e.target.value)}
-                                    placeholder="custom-alias (auto-generated if empty)"
-                                    style={{ ...inputStyle, flex: 1 }}
-                                    onFocus={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(148,163,184,0.15)"; e.currentTarget.style.background = "#ffffff"; }}
-                                    onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#f8fafc"; }}
+                                    placeholder="custom-alias"
+                                    className={`${inputClasses} flex-1`}
                                 />
                                 <button
                                     type="button"
                                     onClick={handleGenerate}
-                                    style={{
-                                        height: "44px",
-                                        padding: "0 16px",
-                                        borderRadius: "12px",
-                                        border: "1px solid #e2e8f0",
-                                        background: "#f8fafc",
-                                        color: "#64748b",
-                                        fontSize: "12px",
-                                        fontWeight: 600,
-                                        cursor: "pointer",
-                                        transition: "all 0.15s ease",
-                                        fontFamily: "inherit",
-                                    }}
+                                    className="h-12 px-5 rounded-xl border border-border bg-surface-hover hover:bg-surface-active text-text-primary text-xs font-bold transition-colors shrink-0"
                                 >
-                                    Generate
+                                    Auto
                                 </button>
                             </div>
                         </div>
 
                         <div>
-                            <div style={labelStyle}>
-                                <Type size={14} style={{ color: "#94a3b8" }} />
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>Meta Title (for bots)</span>
+                            <div className={labelClasses}>
+                                <Type size={14} className="text-icon-muted" />
+                                <span>Meta Title (Bots)</span>
                             </div>
                             <input
                                 type="text"
                                 value={customTitle}
                                 onChange={(e) => setCustomTitle(e.target.value)}
-                                placeholder="Custom OG title for social previews"
-                                style={inputStyle}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(148,163,184,0.15)"; e.currentTarget.style.background = "#ffffff"; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#f8fafc"; }}
+                                placeholder="Custom OG title"
+                                className={inputClasses}
                             />
                         </div>
 
                         <div>
-                            <div style={labelStyle}>
-                                <Image size={14} style={{ color: "#94a3b8" }} />
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>Meta Image URL (for bots)</span>
+                            <div className={labelClasses}>
+                                <ImageIcon size={14} className="text-icon-muted" />
+                                <span>Meta Image (Bots)</span>
                             </div>
                             <input
                                 type="url"
                                 value={customImageUrl}
                                 onChange={(e) => setCustomImageUrl(e.target.value)}
-                                placeholder="https://example.com/preview-image.jpg"
-                                style={inputStyle}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(148,163,184,0.15)"; e.currentTarget.style.background = "#ffffff"; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#f8fafc"; }}
+                                placeholder="https://example.com/preview.jpg"
+                                className={inputClasses}
                             />
                         </div>
 
                         <div>
-                            <div style={labelStyle}>
-                                <FileText size={14} style={{ color: "#94a3b8" }} />
-                                <span style={{ fontSize: "11px", fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em" }}>Alt Page Content (optional)</span>
+                            <div className={labelClasses}>
+                                <Globe size={14} className="text-icon-muted" />
+                                <span>Alt Page URL (Bots)</span>
                             </div>
-                            <textarea
-                                value={altPageContent}
-                                onChange={(e) => setAltPageContent(e.target.value)}
-                                placeholder="Alternative page HTML shown to bots..."
-                                rows={3}
-                                style={{
-                                    ...inputStyle,
-                                    height: "auto",
-                                    padding: "12px 16px",
-                                    resize: "none" as const,
-                                }}
-                                onFocus={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(148,163,184,0.15)"; e.currentTarget.style.background = "#ffffff"; }}
-                                onBlur={(e) => { e.currentTarget.style.borderColor = "#e2e8f0"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.background = "#f8fafc"; }}
+                            <input
+                                type="url"
+                                value={altPageUrl}
+                                onChange={(e) => setAltPageUrl(e.target.value)}
+                                placeholder="https://example.com/landing-page"
+                                className={inputClasses}
                             />
                         </div>
-                    </div>
 
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, y: -4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            style={{
-                                marginTop: "16px",
-                                padding: "12px 16px",
-                                borderRadius: "12px",
-                                background: "#fef2f2",
-                                border: "1px solid #fecaca",
-                                color: "#dc2626",
-                                fontSize: "12px",
-                                fontWeight: 500,
-                            }}
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs font-bold mt-2"
+                            >
+                                {error}
+                            </motion.div>
+                        )}
+
+                        <motion.button
+                            type="submit"
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.99 }}
+                            disabled={loading}
+                            className="w-full h-12 mt-4 rounded-xl flex items-center justify-center gap-2 text-white bg-indigo-600 hover:bg-indigo-500 text-sm font-bold transition-all shadow-[0_0_20px_rgba(79,70,229,0.2)] disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
                         >
-                            {error}
-                        </motion.div>
-                    )}
-
-                    <motion.button
-                        type="submit"
-                        whileHover={{ scale: 1.01 }}
-                        whileTap={{ scale: 0.99 }}
-                        disabled={loading}
-                        style={{
-                            width: "100%",
-                            height: "48px",
-                            marginTop: "20px",
-                            borderRadius: "14px",
-                            border: "none",
-                            cursor: loading ? "not-allowed" : "pointer",
-                            color: "#ffffff",
-                            fontSize: "14px",
-                            fontWeight: 600,
-                            fontFamily: "inherit",
-                            background: "linear-gradient(135deg, #0f172a 0%, #334155 100%)",
-                            boxShadow: "0 4px 12px rgba(15,23,42,0.3)",
-                            opacity: loading ? 0.6 : 1,
-                            transition: "all 0.2s ease",
-                        }}
-                    >
-                        {loading ? "Creating..." : "Create Link"}
-                    </motion.button>
-                </form>
+                            {loading ? "Creating..." : "Create Link"}
+                        </motion.button>
+                    </form>
+                </div>
             </motion.div>
         </motion.div>
     );

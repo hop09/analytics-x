@@ -1,7 +1,7 @@
 "use client";
 
 import PageTransition from "@/components/ui/PageTransition";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
     Database,
     ShieldCheck,
@@ -11,8 +11,11 @@ import {
     XCircle,
     ChevronRight,
     ExternalLink,
+    Sun,
+    Moon,
 } from "lucide-react";
 import { useState } from "react";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface SettingsClientProps {
     supabaseUrl: string;
@@ -22,289 +25,206 @@ interface SettingsClientProps {
 export default function SettingsClient({ supabaseUrl, isConnected }: SettingsClientProps) {
     const [notifications, setNotifications] = useState(false);
     const [expandedSection, setExpandedSection] = useState<string | null>(null);
+    const { theme, toggleTheme } = useTheme();
 
     const toggleSection = (id: string) => {
         setExpandedSection(expandedSection === id ? null : id);
     };
 
-    const cardStyle: React.CSSProperties = {
-        background: "#ffffff",
-        border: "1px solid #e5e7eb",
-        borderRadius: "16px",
-        overflow: "hidden",
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
-        transition: "all 0.2s ease",
-    };
-
     return (
         <PageTransition>
-            <div style={{ marginBottom: "36px" }}>
-                <h1 style={{ fontSize: "28px", fontWeight: 800, color: "#0f172a", letterSpacing: "-0.03em" }}>
-                    Settings
-                </h1>
-                <p style={{ fontSize: "15px", color: "#94a3b8", marginTop: "4px" }}>
-                    Configure your workspace
-                </p>
-            </div>
+            <div className="max-w-[1000px] mx-auto space-y-8">
+                <div className="flex flex-col mb-10">
+                    <h1 className="text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
+                        Settings
+                    </h1>
+                    <p className="text-sm md:text-base text-text-muted mt-2">
+                        Configure your workspace and integrations
+                    </p>
+                </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0 }}
-                    style={cardStyle}
-                >
-                    <div
-                        onClick={() => toggleSection("supabase")}
-                        style={{
-                            padding: "20px 24px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fafbfc"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                <div className="flex flex-col gap-4">
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0 }}
+                        className="glass-panel overflow-hidden rounded-3xl"
                     >
-                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div style={{
-                                width: "44px", height: "44px", borderRadius: "12px",
-                                background: isConnected ? "#f0fdf4" : "#fef2f2",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                            }}>
-                                <Database size={20} color={isConnected ? "#22c55e" : "#ef4444"} />
+                        <div onClick={() => toggleSection("supabase")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSection("supabase"); }} role="button" tabIndex={0} className="p-6 md:px-8 flex items-center justify-between cursor-pointer hover:bg-surface-hover/50 transition-colors group">
+                            <div className="flex items-center gap-5">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-inner border border-border ${isConnected ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+                                    <Database size={22} className={isConnected ? "text-emerald-400" : "text-red-400"} />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-bold text-text-primary tracking-tight">Supabase Connection</p>
+                                    <p className="text-sm text-text-muted mt-0.5 group-hover:text-text-secondary transition-colors">Database and authentication sync</p>
+                                </div>
                             </div>
-                            <div>
-                                <p style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Supabase Connection</p>
-                                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Database and authentication</p>
+                            <div className="flex items-center gap-4">
+                                {isConnected ? (
+                                    <span className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider border border-emerald-500/20">
+                                        <CheckCircle2 size={14} /> Healthy
+                                    </span>
+                                ) : (
+                                    <span className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-red-500/10 text-red-400 text-xs font-bold uppercase tracking-wider border border-red-500/20">
+                                        <XCircle size={14} /> Disconnected
+                                    </span>
+                                )}
+                                <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center border border-border">
+                                    <ChevronRight size={16} className={`text-icon-muted transition-transform duration-300 ${expandedSection === "supabase" ? "rotate-90" : ""}`} />
+                                </div>
                             </div>
                         </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            {isConnected ? (
-                                <span style={{
-                                    display: "flex", alignItems: "center", gap: "6px",
-                                    fontSize: "12px", fontWeight: 600, color: "#22c55e",
-                                    padding: "5px 12px", borderRadius: "20px", background: "#f0fdf4",
-                                }}>
-                                    <CheckCircle2 size={14} />
-                                    Connected
-                                </span>
-                            ) : (
-                                <span style={{
-                                    display: "flex", alignItems: "center", gap: "6px",
-                                    fontSize: "12px", fontWeight: 600, color: "#ef4444",
-                                    padding: "5px 12px", borderRadius: "20px", background: "#fef2f2",
-                                }}>
-                                    <XCircle size={14} />
-                                    Not connected
-                                </span>
+
+                        <AnimatePresence initial={false}>
+                            {expandedSection === "supabase" && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
+                                    <div className="px-6 md:px-8 pb-6 md:pb-8 pt-2 border-t border-border/50 bg-surface/50">
+                                        <div className="flex flex-col gap-4 max-w-2xl">
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 rounded-2xl bg-surface border border-border">
+                                                <span className="text-sm font-semibold text-text-secondary">Project URL</span>
+                                                <span className="text-sm font-mono text-text-primary px-3 py-1.5 rounded-xl bg-surface-hover border border-border max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+                                                    {supabaseUrl || "Not configured"}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 rounded-2xl bg-surface border border-border">
+                                                <span className="text-sm font-semibold text-text-secondary">Anon Key</span>
+                                                <span className="text-sm font-mono text-text-primary px-3 py-1.5 rounded-xl bg-surface-hover border border-border tracking-widest">
+                                                    ••••••••••••••••
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 rounded-2xl bg-surface border border-border">
+                                                <span className="text-sm font-semibold text-text-secondary">Service Role Key</span>
+                                                <span className="text-sm font-mono text-text-primary px-3 py-1.5 rounded-xl bg-surface-hover border border-border tracking-widest">
+                                                    ••••••••••••••••
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-4 rounded-2xl bg-surface border border-border">
+                                                <span className="text-sm font-semibold text-text-secondary">Status</span>
+                                                <span className={`text-sm font-bold ${isConnected ? "text-emerald-400" : "text-red-400"}`}>
+                                                    {isConnected ? "Connected & Synchronized" : "Connection Failed"}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <a href={supabaseUrl ? supabaseUrl.replace(".supabase.co", ".supabase.co/project/default") : "#"} target="_blank" rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-2 mt-6 px-5 py-2.5 rounded-xl glass-panel text-sm font-bold text-text-primary hover:text-white hover:border-indigo-500/50 hover:bg-surface-hover transition-all group w-fit"
+                                        >
+                                            <ExternalLink size={16} className="text-indigo-400 group-hover:scale-110 transition-transform" />
+                                            Open Supabase Dashboard
+                                        </a>
+                                    </div>
+                                </motion.div>
                             )}
-                            <ChevronRight
-                                size={16}
-                                color="#d1d5db"
-                                style={{
-                                    transform: expandedSection === "supabase" ? "rotate(90deg)" : "none",
-                                    transition: "transform 0.2s ease",
-                                }}
-                            />
-                        </div>
-                    </div>
+                        </AnimatePresence>
+                    </motion.div>
 
-                    {expandedSection === "supabase" && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            style={{ borderTop: "1px solid #f3f4f6", padding: "20px 24px" }}
-                        >
-                            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <span style={{ fontSize: "13px", color: "#64748b" }}>Project URL</span>
-                                    <span style={{
-                                        fontSize: "12px", fontFamily: "monospace",
-                                        color: "#0f172a", background: "#f8fafc",
-                                        padding: "4px 10px", borderRadius: "6px",
-                                        maxWidth: "350px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                                    }}>
-                                        {supabaseUrl || "Not set"}
-                                    </span>
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <span style={{ fontSize: "13px", color: "#64748b" }}>Anon Key</span>
-                                    <span style={{
-                                        fontSize: "12px", fontFamily: "monospace",
-                                        color: "#0f172a", background: "#f8fafc",
-                                        padding: "4px 10px", borderRadius: "6px",
-                                    }}>
-                                        ••••••••••••••••
-                                    </span>
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <span style={{ fontSize: "13px", color: "#64748b" }}>Service Role Key</span>
-                                    <span style={{
-                                        fontSize: "12px", fontFamily: "monospace",
-                                        color: "#0f172a", background: "#f8fafc",
-                                        padding: "4px 10px", borderRadius: "6px",
-                                    }}>
-                                        ••••••••••••••••
-                                    </span>
-                                </div>
-                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                    <span style={{ fontSize: "13px", color: "#64748b" }}>Status</span>
-                                    <span style={{
-                                        fontSize: "12px", fontWeight: 600,
-                                        color: isConnected ? "#22c55e" : "#ef4444",
-                                    }}>
-                                        {isConnected ? "Connected & Healthy" : "Connection failed"}
-                                    </span>
-                                </div>
-                            </div>
-                            <a
-                                href={supabaseUrl ? supabaseUrl.replace(".supabase.co", ".supabase.co/project/default") : "#"}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                    display: "inline-flex", alignItems: "center", gap: "6px",
-                                    marginTop: "18px", padding: "8px 16px",
-                                    borderRadius: "10px", border: "1px solid #e5e7eb",
-                                    fontSize: "12px", fontWeight: 600, color: "#64748b",
-                                    textDecoration: "none", transition: "all 0.15s ease",
-                                }}
-                                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#94a3b8"; e.currentTarget.style.color = "#0f172a"; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.color = "#64748b"; }}
-                            >
-                                <ExternalLink size={14} />
-                                Open Supabase Dashboard
-                            </a>
-                        </motion.div>
-                    )}
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.06 }}
-                    style={cardStyle}
-                >
-                    <div
-                        onClick={() => toggleSection("bot")}
-                        style={{
-                            padding: "20px 24px",
-                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                            cursor: "pointer",
-                        }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "#fafbfc"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
+                        className="glass-panel overflow-hidden rounded-3xl"
                     >
-                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "#eff6ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <ShieldCheck size={20} color="#3b82f6" />
+                        <div onClick={() => toggleSection("bot")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") toggleSection("bot"); }} role="button" tabIndex={0} className="p-6 md:px-8 flex items-center justify-between cursor-pointer hover:bg-surface-hover/50 transition-colors group">
+                            <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center shadow-inner border border-border">
+                                    <ShieldCheck size={22} className="text-blue-400" />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-bold text-text-primary tracking-tight">Bot Detection Engine</p>
+                                    <p className="text-sm text-text-muted mt-0.5 group-hover:text-text-secondary transition-colors">Manage crawler identification rules</p>
+                                </div>
                             </div>
-                            <div>
-                                <p style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Bot Detection</p>
-                                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Manage crawler detection rules</p>
-                            </div>
-                        </div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                            <span style={{ fontSize: "12px", fontWeight: 600, color: "#3b82f6", padding: "5px 12px", borderRadius: "20px", background: "#eff6ff" }}>
-                                35+ rules active
-                            </span>
-                            <ChevronRight size={16} color="#d1d5db" style={{ transform: expandedSection === "bot" ? "rotate(90deg)" : "none", transition: "transform 0.2s ease" }} />
-                        </div>
-                    </div>
-
-                    {expandedSection === "bot" && (
-                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} style={{ borderTop: "1px solid #f3f4f6", padding: "20px 24px" }}>
-                            <p style={{ fontSize: "13px", color: "#64748b", lineHeight: 1.6 }}>
-                                Bot detection is active with 35+ user-agent patterns covering Facebook, TikTok, Twitter, LinkedIn, WhatsApp, Discord, Google, Bing, and more. Detected bots receive custom OG meta tags while humans get instant redirects.
-                            </p>
-                            <div style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                                {["Facebook", "TikTok", "Twitter", "LinkedIn", "WhatsApp", "Discord", "Google", "Bing", "Slack", "Telegram"].map((bot) => (
-                                    <span key={bot} style={{
-                                        fontSize: "11px", fontWeight: 500, color: "#64748b",
-                                        padding: "4px 10px", borderRadius: "6px", background: "#f8fafc", border: "1px solid #f1f5f9",
-                                    }}>
-                                        {bot}
-                                    </span>
-                                ))}
-                                <span style={{ fontSize: "11px", fontWeight: 500, color: "#94a3b8", padding: "4px 10px" }}>
-                                    +25 more
+                            <div className="flex items-center gap-4">
+                                <span className="hidden sm:flex px-3 py-1.5 rounded-xl bg-blue-500/10 text-blue-400 text-xs font-bold uppercase tracking-wider border border-blue-500/20">
+                                    Active (35+ Rules)
                                 </span>
-                            </div>
-                        </motion.div>
-                    )}
-                </motion.div>
-
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.12 }}
-                    style={cardStyle}
-                >
-                    <div
-                        style={{
-                            padding: "20px 24px",
-                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                        }}
-                    >
-                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "#faf5ff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <Bell size={20} color="#a855f7" />
-                            </div>
-                            <div>
-                                <p style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Notifications</p>
-                                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Get notified on new click events</p>
+                                <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center border border-border">
+                                    <ChevronRight size={16} className={`text-icon-muted transition-transform duration-300 ${expandedSection === "bot" ? "rotate-90" : ""}`} />
+                                </div>
                             </div>
                         </div>
-                        <button
-                            onClick={() => setNotifications(!notifications)}
-                            style={{
-                                width: "48px", height: "26px",
-                                borderRadius: "13px", border: "none", cursor: "pointer",
-                                background: notifications ? "#22c55e" : "#e5e7eb",
-                                position: "relative", transition: "background 0.2s ease",
-                            }}
-                        >
-                            <div style={{
-                                width: "22px", height: "22px",
-                                borderRadius: "11px", background: "#ffffff",
-                                position: "absolute", top: "2px",
-                                left: notifications ? "24px" : "2px",
-                                transition: "left 0.2s ease",
-                                boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
-                            }} />
-                        </button>
-                    </div>
-                </motion.div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.18 }}
-                    style={cardStyle}
-                >
-                    <div
-                        style={{
-                            padding: "20px 24px",
-                            display: "flex", alignItems: "center", justifyContent: "space-between",
-                        }}
+                        <AnimatePresence initial={false}>
+                            {expandedSection === "bot" && (
+                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }} className="overflow-hidden">
+                                    <div className="px-6 md:px-8 pb-6 md:pb-8 pt-2 border-t border-border/50 bg-surface/50">
+                                        <p className="text-sm text-text-secondary leading-relaxed max-w-3xl">
+                                            The advanced bot detection engine is currently monitoring traffic against 35+ known bot user-agent signatures including major social networks and search indexers. Detected bots are served custom OG metadata, while legitimate users bypass validation instantly.
+                                        </p>
+                                        <div className="mt-6 flex flex-wrap gap-2">
+                                            {["Facebook", "TikTok", "Twitter", "LinkedIn", "WhatsApp", "Discord", "Google", "Bing", "Slack", "Telegram"].map((bot) => (
+                                                <span key={bot} className="px-3 py-1.5 rounded-lg bg-surface border border-border text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-default">
+                                                    {bot}
+                                                </span>
+                                            ))}
+                                            <span className="px-3 py-1.5 rounded-lg bg-surface/30 border border-transparent text-xs font-bold text-text-muted cursor-default">
+                                                +25 more signatures
+                                            </span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </motion.div>
+
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }}
+                        className="glass-panel overflow-hidden rounded-3xl"
                     >
-                        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-                            <div style={{ width: "44px", height: "44px", borderRadius: "12px", background: "#fff7ed", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                <Palette size={20} color="#f97316" />
+                        <div className="p-6 md:px-8 flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center shadow-inner border border-border">
+                                    <Bell size={22} className="text-purple-400" />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-bold text-text-primary tracking-tight">Push Notifications</p>
+                                    <p className="text-sm text-text-muted mt-0.5">Alerts for significant traffic spikes</p>
+                                </div>
                             </div>
-                            <div>
-                                <p style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Appearance</p>
-                                <p style={{ fontSize: "12px", color: "#94a3b8", marginTop: "2px" }}>Customize your dashboard theme</p>
+
+                            <div className="flex items-center gap-3">
+                                <span className="px-3 py-1.5 rounded-xl bg-amber-500/10 text-amber-400 text-xs font-bold uppercase tracking-wider border border-amber-500/20">
+                                    Coming Soon
+                                </span>
+                                <button
+                                    onClick={() => setNotifications(!notifications)}
+                                    disabled
+                                    className={`w-12 h-6 rounded-full relative transition-colors duration-300 outline-none flex items-center p-1 opacity-50 cursor-not-allowed ${notifications ? 'bg-indigo-500' : 'bg-surface-active'}`}
+                                    aria-label="Toggle notifications"
+                                >
+                                    <motion.div layout className={`w-4 h-4 rounded-full bg-white shadow-md ${notifications ? 'ml-auto' : 'mr-auto'}`} />
+                                </button>
                             </div>
                         </div>
-                        <span style={{
-                            fontSize: "12px", fontWeight: 600, color: "#64748b",
-                            padding: "5px 12px", borderRadius: "20px", background: "#f8fafc",
-                        }}>
-                            Light mode
-                        </span>
-                    </div>
-                </motion.div>
+                    </motion.div>
+
+                    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.3 }}
+                        className="glass-panel overflow-hidden rounded-3xl"
+                    >
+                        <div className="p-6 md:px-8 flex items-center justify-between">
+                            <div className="flex items-center gap-5">
+                                <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center shadow-inner border border-border">
+                                    <Palette size={22} className="text-orange-400" />
+                                </div>
+                                <div>
+                                    <p className="text-lg font-bold text-text-primary tracking-tight">Appearance</p>
+                                    <p className="text-sm text-text-muted mt-0.5">Switch between dark &amp; light mode</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="hidden sm:block text-xs font-bold text-text-secondary uppercase tracking-wider">
+                                    {theme === "dark" ? "Dark" : "Light"}
+                                </span>
+                                <button
+                                    onClick={toggleTheme}
+                                    className={`w-14 h-7 rounded-full relative transition-colors duration-300 outline-none flex items-center px-1 ${theme === "light" ? "bg-indigo-500" : "bg-surface-active"}`}
+                                    aria-label="Toggle theme"
+                                >
+                                    <motion.div
+                                        layout
+                                        className={`w-5 h-5 rounded-full bg-white shadow-md flex items-center justify-center ${theme === "light" ? "ml-auto" : "mr-auto"}`}
+                                        transition={{ type: "spring", bounce: 0.25, duration: 0.4 }}
+                                    >
+                                        {theme === "dark" ? <Moon size={12} className="text-zinc-700" /> : <Sun size={12} className="text-amber-500" />}
+                                    </motion.div>
+                                </button>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
             </div>
         </PageTransition>
     );

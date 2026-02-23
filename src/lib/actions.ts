@@ -9,7 +9,7 @@ export async function createLink(data: {
     original_url: string;
     custom_title?: string;
     custom_image_url?: string;
-    alt_page_content?: string;
+    alt_page_url?: string;
 }): Promise<{ data: Link | null; error: string | null }> {
     const { data: link, error } = await supabaseAdmin
         .from("links")
@@ -18,7 +18,7 @@ export async function createLink(data: {
             original_url: data.original_url,
             custom_title: data.custom_title || null,
             custom_image_url: data.custom_image_url || null,
-            alt_page_content: data.alt_page_content || null,
+            alt_page_url: data.alt_page_url || null,
         })
         .select()
         .single();
@@ -156,23 +156,20 @@ export async function getRecentClicks(limit: number = 10) {
 }
 
 export async function getLinksWithClickCounts(): Promise<(Link & { click_count: number })[]> {
-    const { data: links } = await supabaseAdmin
-        .from("links")
-        .select("*")
-        .order("created_at", { ascending: false });
+    const [{ data: links }, { data: clicks }] = await Promise.all([
+        supabaseAdmin.from("links").select("*").order("created_at", { ascending: false }),
+        supabaseAdmin.from("clicks").select("link_id"),
+    ]);
 
     if (!links) return [];
 
-    const linksWithCounts = await Promise.all(
-        links.map(async (link) => {
-            const { count } = await supabaseAdmin
-                .from("clicks")
-                .select("*", { count: "exact", head: true })
-                .eq("link_id", link.id);
+    const countMap = new Map<string, number>();
+    (clicks || []).forEach((click) => {
+        countMap.set(click.link_id, (countMap.get(click.link_id) || 0) + 1);
+    });
 
-            return { ...link, click_count: count || 0 };
-        })
-    );
-
-    return linksWithCounts;
+    return links.map((link) => ({
+        ...link,
+        click_count: countMap.get(link.id) || 0,
+    }));
 }

@@ -1,5 +1,15 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
+import { cache } from "react";
+
+const getLink = cache(async (shortCode: string) => {
+    const { data } = await supabaseAdmin
+        .from("links")
+        .select("*")
+        .eq("short_code", shortCode)
+        .single();
+    return data;
+});
 
 interface PageProps {
     params: Promise<{ shortCode: string }>;
@@ -7,12 +17,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps) {
     const { shortCode } = await params;
-
-    const { data: link } = await supabaseAdmin
-        .from("links")
-        .select("*")
-        .eq("short_code", shortCode)
-        .single();
+    const link = await getLink(shortCode);
 
     if (!link) return {};
 
@@ -33,45 +38,24 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function BotPage({ params }: PageProps) {
     const { shortCode } = await params;
-
-    const { data: link } = await supabaseAdmin
-        .from("links")
-        .select("*")
-        .eq("short_code", shortCode)
-        .single();
+    const link = await getLink(shortCode);
 
     if (!link) {
         notFound();
     }
 
+    if (link.alt_page_url) {
+        redirect(link.alt_page_url);
+    }
+
     return (
-        <html lang="en">
-            <head>
-                <meta property="og:title" content={link.custom_title || link.short_code} />
-                {link.custom_image_url && (
-                    <meta property="og:image" content={link.custom_image_url} />
-                )}
-                <meta property="og:type" content="website" />
-                <meta name="twitter:card" content="summary_large_image" />
-                <meta name="twitter:title" content={link.custom_title || link.short_code} />
-                {link.custom_image_url && (
-                    <meta name="twitter:image" content={link.custom_image_url} />
-                )}
-            </head>
-            <body>
-                <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", fontFamily: "sans-serif" }}>
-                    <h1 style={{ fontSize: "24px", color: "#111827" }}>
-                        {link.custom_title || link.short_code}
-                    </h1>
-                    {link.alt_page_content ? (
-                        <div dangerouslySetInnerHTML={{ __html: link.alt_page_content }} />
-                    ) : (
-                        <p style={{ color: "#6b7280", fontSize: "14px" }}>
-                            Redirecting to the destination...
-                        </p>
-                    )}
-                </div>
-            </body>
-        </html>
+        <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", fontFamily: "sans-serif" }}>
+            <h1 style={{ fontSize: "24px", color: "#111827" }}>
+                {link.custom_title || link.short_code}
+            </h1>
+            <p style={{ color: "#6b7280", fontSize: "14px" }}>
+                Redirecting to the destination...
+            </p>
+        </div>
     );
 }

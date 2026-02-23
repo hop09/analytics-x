@@ -2,6 +2,7 @@
 
 import PageTransition from "@/components/ui/PageTransition";
 import StatCard from "@/components/ui/StatCard";
+import ChartErrorBoundary from "@/components/ui/ChartErrorBoundary";
 import { motion } from "framer-motion";
 import {
     ArrowLeft,
@@ -14,6 +15,8 @@ import {
     Copy,
     Check,
     ExternalLink,
+    BarChart3,
+    Activity,
 } from "lucide-react";
 import {
     AreaChart,
@@ -31,52 +34,52 @@ import type { Link, LinkStats } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useRealtimeClicks } from "@/hooks/useRealtime";
+import { formatNumber } from "@/lib/utils";
+import { useTheme } from "@/components/ThemeProvider";
 
 interface LinkAnalyticsClientProps {
     link: Link;
     stats: LinkStats;
 }
 
-const PIE_COLORS = ["#0f172a", "#94a3b8", "#cbd5e1"];
+const PIE_COLORS = ["#8b5cf6", "#6366f1", "#4f46e5"];
 
-const chartTooltipStyle = {
-    backgroundColor: "#0f172a",
-    border: "none",
-    borderRadius: "12px",
-    padding: "8px 14px",
-    fontSize: "12px",
-    color: "#fff",
-};
-
-const cardStyle: React.CSSProperties = {
-    background: "#ffffff",
-    border: "1px solid #e5e7eb",
+const darkTooltipStyle = {
+    backgroundColor: "rgba(24, 24, 27, 0.8)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     borderRadius: "16px",
-    boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+    padding: "12px 16px",
+    fontSize: "13px",
+    color: "#f4f4f5",
+    boxShadow: "0 10px 40px -10px rgba(0,0,0,0.5)",
+    fontWeight: 500,
 };
 
-const breakdownHeaderStyle: React.CSSProperties = {
-    display: "flex",
-    alignItems: "center",
-    gap: "10px",
-    marginBottom: "18px",
-};
-
-const iconBoxStyle: React.CSSProperties = {
-    width: "32px",
-    height: "32px",
-    borderRadius: "10px",
-    background: "#f1f5f9",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+const lightTooltipStyle = {
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    backdropFilter: "blur(12px)",
+    WebkitBackdropFilter: "blur(12px)",
+    border: "1px solid rgba(0, 0, 0, 0.08)",
+    borderRadius: "16px",
+    padding: "12px 16px",
+    fontSize: "13px",
+    color: "#0f172a",
+    boxShadow: "0 10px 40px -10px rgba(0,0,0,0.1)",
+    fontWeight: 500,
 };
 
 export default function LinkAnalyticsClient({ link, stats }: LinkAnalyticsClientProps) {
     const router = useRouter();
     const [copied, setCopied] = useState(false);
+    const { theme } = useTheme();
 
     useRealtimeClicks(link.id);
+
+    const chartTooltipStyle = theme === "light" ? lightTooltipStyle : darkTooltipStyle;
+    const tickFill = theme === "light" ? "#94a3b8" : "#71717a";
+    const gridStroke = theme === "light" ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.05)";
 
     const handleCopy = async () => {
         const url = `${window.location.origin}/${link.short_code}`;
@@ -90,187 +93,203 @@ export default function LinkAnalyticsClient({ link, stats }: LinkAnalyticsClient
         { name: "Bot", value: stats.bot_clicks },
     ].filter((d) => d.value > 0);
 
-    const smallBtnStyle: React.CSSProperties = {
-        width: "32px",
-        height: "32px",
-        borderRadius: "8px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        border: "none",
-        cursor: "pointer",
-        background: "#f1f5f9",
-        color: "#64748b",
-        transition: "all 0.15s ease",
-    };
+    const smallBtnStyle = "w-10 h-10 rounded-xl flex items-center justify-center border border-transparent hover:border-border bg-surface-hover hover:bg-surface-active text-text-muted hover:text-text-primary transition-colors cursor-pointer shrink-0";
 
     return (
         <PageTransition>
-            <div className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8">
-                <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => router.push("/links")}
-                    style={{
-                        width: "36px",
-                        height: "36px",
-                        borderRadius: "10px",
-                        background: "#f1f5f9",
-                        border: "none",
-                        cursor: "pointer",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#64748b",
-                        flexShrink: 0,
-                    }}
-                >
-                    <ArrowLeft size={18} />
-                </motion.button>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-                        <h1 className="text-xl md:text-2xl" style={{ fontWeight: 800, color: "#0f172a", letterSpacing: "-0.02em" }}>
-                            /{link.short_code}
-                        </h1>
-                        <div style={{ display: "flex", gap: "4px" }}>
-                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={handleCopy} style={smallBtnStyle}>
-                                {copied ? <Check size={14} style={{ color: "#059669" }} /> : <Copy size={14} />}
-                            </motion.button>
-                            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} onClick={() => window.open(link.original_url, "_blank")} style={smallBtnStyle}>
-                                <ExternalLink size={14} />
-                            </motion.button>
+            <div className="space-y-8">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mb-10">
+                    <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => router.push("/links")}
+                        className="w-12 h-12 rounded-2xl glass-panel flex items-center justify-center hover:bg-surface-hover hover:border-indigo-500/30 text-text-muted hover:text-indigo-400 transition-colors shrink-0"
+                    >
+                        <ArrowLeft size={20} />
+                    </motion.button>
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-4 flex-wrap">
+                            <h1 className="text-3xl md:text-4xl font-extrabold text-text-primary tracking-tight font-mono">
+                                <span className="text-text-muted select-none">/</span>{link.short_code}
+                            </h1>
+                            <div className="flex gap-2">
+                                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={handleCopy} className={smallBtnStyle}>
+                                    {copied ? <Check size={16} className="text-emerald-400" /> : <Copy size={16} />}
+                                </motion.button>
+                                <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => window.open(link.original_url, "_blank", "noopener,noreferrer")} className={smallBtnStyle}>
+                                    <ExternalLink size={16} />
+                                </motion.button>
+                            </div>
                         </div>
+                        <p className="hidden sm:block text-sm text-text-muted mt-2 truncate max-w-2xl overflow-hidden text-ellipsis whitespace-nowrap">
+                            {link.original_url}
+                        </p>
                     </div>
-                    <p className="hidden sm:block" style={{ fontSize: "12px", color: "#94a3b8", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {link.original_url}
-                    </p>
                 </div>
-            </div>
 
-            <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6 md:mb-8">
-                <StatCard icon={MousePointerClick} label="Total Clicks" value={stats.total_clicks} delay={0} />
-                <StatCard icon={Users} label="Human Clicks" value={stats.human_clicks} delay={0.1} />
-                <StatCard icon={Bot} label="Bot Hits" value={stats.bot_clicks} delay={0.2} />
-            </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
+                    <StatCard icon={MousePointerClick} label="Total Clicks" value={formatNumber(stats.total_clicks)} delay={0} />
+                    <StatCard icon={Users} label="Human Clicks" value={formatNumber(stats.human_clicks)} delay={0.1} />
+                    <StatCard icon={Bot} label="Bot Hits" value={formatNumber(stats.bot_clicks)} delay={0.2} />
+                </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3 md:gap-4 mb-6">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
-                    className="p-5 md:p-6" style={cardStyle}
-                >
-                    <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a", marginBottom: "20px" }}>Clicks Over Time</h3>
-                    {stats.clicks_over_time.length > 0 ? (
-                        <ResponsiveContainer width="100%" height={220}>
-                            <AreaChart data={stats.clicks_over_time}>
-                                <defs>
-                                    <linearGradient id="clickGrad" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#0f172a" stopOpacity={0.1} />
-                                        <stop offset="95%" stopColor="#0f172a" stopOpacity={0} />
-                                    </linearGradient>
-                                </defs>
-                                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                                <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={{ stroke: "#f1f5f9" }}
-                                    tickFormatter={(val) => { const d = new Date(val); return `${d.getMonth() + 1}/${d.getDate()}`; }} />
-                                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} tickLine={false} axisLine={false} allowDecimals={false} />
-                                <Tooltip contentStyle={chartTooltipStyle} />
-                                <Area type="monotone" dataKey="count" stroke="#0f172a" strokeWidth={2} fill="url(#clickGrad)" />
-                            </AreaChart>
-                        </ResponsiveContainer>
-                    ) : (
-                        <div style={{ height: "220px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <p style={{ fontSize: "13px", color: "#cbd5e1" }}>No click data yet</p>
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
+                        className="glass-panel p-6 lg:p-8 rounded-3xl lg:col-span-2 relative overflow-hidden flex flex-col"
+                    >
+                        <div className="absolute top-0 right-1/4 w-80 h-80 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+
+                        <div className="flex items-center gap-3 mb-8 relative z-10">
+                            <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center border border-border shrink-0 shadow-inner">
+                                <BarChart3 className="w-5 h-5 text-indigo-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-text-primary tracking-tight">Clicks Over Time</h3>
+                                <p className="text-xs text-text-muted mt-0.5">Rolling aggregated traffic</p>
+                            </div>
                         </div>
-                    )}
-                </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
-                    className="p-5 md:p-6" style={cardStyle}
-                >
-                    <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a", marginBottom: "20px" }}>Bot vs Human</h3>
-                    {botHumanData.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                            <ResponsiveContainer width="100%" height={160}>
-                                <PieChart>
-                                    <Pie data={botHumanData} cx="50%" cy="50%" innerRadius={45} outerRadius={68} paddingAngle={4} dataKey="value">
-                                        {botHumanData.map((_, index) => (<Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />))}
-                                    </Pie>
-                                    <Tooltip contentStyle={chartTooltipStyle} />
-                                </PieChart>
-                            </ResponsiveContainer>
-                            <div style={{ display: "flex", gap: "20px", marginTop: "8px" }}>
-                                {botHumanData.map((entry, index) => (
-                                    <div key={entry.name} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                                        <div style={{ width: "10px", height: "10px", borderRadius: "50%", background: PIE_COLORS[index] }} />
-                                        <span style={{ fontSize: "12px", color: "#64748b" }}>{entry.name}</span>
-                                        <span style={{ fontSize: "12px", fontWeight: 700, color: "#0f172a" }}>{entry.value}</span>
+                        {stats.clicks_over_time.length > 0 ? (
+                            <div className="h-[280px] w-full relative z-10">
+                                <ChartErrorBoundary>
+                                <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                    <AreaChart data={stats.clicks_over_time} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="areaColor" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} vertical={false} />
+                                        <XAxis dataKey="date" tick={{ fontSize: 11, fill: tickFill }} tickLine={false} axisLine={false} dy={10}
+                                            tickFormatter={(val) => { const d = new Date(val); return `${d.getMonth() + 1}/${d.getDate()}`; }} />
+                                        <YAxis tick={{ fontSize: 11, fill: tickFill }} tickLine={false} axisLine={false} allowDecimals={false} dx={-10} />
+                                        <Tooltip contentStyle={chartTooltipStyle} cursor={{ stroke: theme === "light" ? "rgba(0,0,0,0.1)" : "rgba(255,255,255,0.1)", strokeWidth: 1, strokeDasharray: "3 3" }} />
+                                        <Area type="monotone" dataKey="count" stroke="#8b5cf6" strokeWidth={3} fill="url(#areaColor)" />
+                                    </AreaChart>
+                                </ResponsiveContainer>
+                                </ChartErrorBoundary>
+                            </div>
+                        ) : (
+                            <div className="h-[280px] flex flex-col items-center justify-center relative z-10">
+                                <Activity className="w-8 h-8 text-icon-muted mb-4 opacity-50" />
+                                <p className="text-sm font-semibold text-text-primary">No traffic data yet</p>
+                            </div>
+                        )}
+                    </motion.div>
+
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
+                        className="glass-panel p-6 lg:p-8 rounded-3xl relative overflow-hidden flex flex-col"
+                    >
+                        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
+
+                        <div className="mb-8">
+                            <h3 className="text-xl font-bold text-text-primary tracking-tight">Traffic Quality</h3>
+                            <p className="text-xs text-text-muted mt-0.5">Bot vs Human ratio</p>
+                        </div>
+
+                        {botHumanData.length > 0 ? (
+                            <div className="flex flex-col items-center flex-1 justify-center min-w-0 min-h-0 relative z-10">
+                                <div className="h-[200px] w-full relative">
+                                    <div className="absolute inset-0 bg-indigo-500/10 blur-2xl rounded-full scale-50" />
+                                    <ChartErrorBoundary>
+                                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                                        <PieChart>
+                                            <Pie
+                                                data={botHumanData}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={55}
+                                                outerRadius={75}
+                                                paddingAngle={6}
+                                                dataKey="value"
+                                                stroke="none"
+                                                cornerRadius={4}
+                                            >
+                                                {botHumanData.map((_, index) => (<Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} style={{ filter: 'drop-shadow(0px 4px 8px rgba(0,0,0,0.3))' }} />))}
+                                            </Pie>
+                                            <Tooltip contentStyle={chartTooltipStyle} itemStyle={{ color: '#fff' }} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                    </ChartErrorBoundary>
+                                </div>
+                                <div className="flex gap-6 mt-6 bg-surface px-4 py-3 rounded-2xl border border-border w-full justify-center">
+                                    {botHumanData.map((entry, index) => (
+                                        <div key={entry.name} className="flex items-center gap-2">
+                                            <div className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_rgba(0,0,0,0.5)]" style={{ background: PIE_COLORS[index], boxShadow: `0 0 10px ${PIE_COLORS[index]}80` }} />
+                                            <span className="text-xs font-semibold text-text-secondary uppercase">{entry.name}</span>
+                                            <span className="text-sm font-bold text-text-primary ml-1">{entry.value}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center relative z-10">
+                                <Bot className="w-8 h-8 text-icon-muted opacity-50 mb-4" />
+                                <p className="text-sm text-text-muted">Awaiting validation data</p>
+                            </div>
+                        )}
+                    </motion.div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}
+                        className="glass-panel p-6 rounded-[2rem]"
+                    >
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
+                            <div className="w-10 h-10 bg-surface-hover rounded-xl flex items-center justify-center border border-border"><Globe size={18} className="text-indigo-400" /></div>
+                            <h3 className="text-base font-bold text-text-primary tracking-tight">Top Countries</h3>
+                        </div>
+                        {stats.top_countries.length > 0 ? (
+                            <div className="flex flex-col gap-4">
+                                {stats.top_countries.slice(0, 5).map((item) => (
+                                    <div key={item.country} className="flex items-center justify-between group">
+                                        <span className="text-sm text-text-secondary font-medium group-hover:text-text-primary transition-colors">{item.country}</span>
+                                        <span className="text-sm font-bold text-text-primary py-1 px-2.5 bg-surface-hover rounded-lg border border-border group-hover:border-indigo-500/30 transition-colors">{item.count}</span>
                                     </div>
                                 ))}
                             </div>
-                        </div>
-                    ) : (
-                        <div style={{ height: "180px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                            <p style={{ fontSize: "13px", color: "#cbd5e1" }}>No data yet</p>
-                        </div>
-                    )}
-                </motion.div>
-            </div>
+                        ) : (<p className="text-sm text-text-muted text-center py-8">No data yet</p>)}
+                    </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}
-                    className="p-5 md:p-6" style={cardStyle}
-                >
-                    <div style={breakdownHeaderStyle}>
-                        <div style={iconBoxStyle}><Globe size={16} style={{ color: "#64748b" }} /></div>
-                        <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Top Countries</h3>
-                    </div>
-                    {stats.top_countries.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            {stats.top_countries.slice(0, 5).map((item) => (
-                                <div key={item.country} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                    <span style={{ fontSize: "13px", color: "#334155" }}>{item.country}</span>
-                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#94a3b8" }}>{item.count}</span>
-                                </div>
-                            ))}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.6 }}
+                        className="glass-panel p-6 rounded-[2rem]"
+                    >
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
+                            <div className="w-10 h-10 bg-surface-hover rounded-xl flex items-center justify-center border border-border"><Smartphone size={18} className="text-indigo-400" /></div>
+                            <h3 className="text-base font-bold text-text-primary tracking-tight">Devices</h3>
                         </div>
-                    ) : (<p style={{ fontSize: "13px", color: "#cbd5e1", textAlign: "center", padding: "16px 0" }}>No data yet</p>)}
-                </motion.div>
+                        {stats.top_devices.length > 0 ? (
+                            <div className="flex flex-col gap-4">
+                                {stats.top_devices.slice(0, 5).map((item) => (
+                                    <div key={item.device} className="flex items-center justify-between group">
+                                        <span className="text-sm text-text-secondary font-medium group-hover:text-text-primary transition-colors">{item.device}</span>
+                                        <span className="text-sm font-bold text-text-primary py-1 px-2.5 bg-surface-hover rounded-lg border border-border group-hover:border-indigo-500/30 transition-colors">{item.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (<p className="text-sm text-text-muted text-center py-8">No data yet</p>)}
+                    </motion.div>
 
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.6 }}
-                    className="p-5 md:p-6" style={cardStyle}
-                >
-                    <div style={breakdownHeaderStyle}>
-                        <div style={iconBoxStyle}><Smartphone size={16} style={{ color: "#64748b" }} /></div>
-                        <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Devices</h3>
-                    </div>
-                    {stats.top_devices.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            {stats.top_devices.slice(0, 5).map((item) => (
-                                <div key={item.device} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                    <span style={{ fontSize: "13px", color: "#334155" }}>{item.device}</span>
-                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#94a3b8" }}>{item.count}</span>
-                                </div>
-                            ))}
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.7 }}
+                        className="glass-panel p-6 rounded-[2rem]"
+                    >
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
+                            <div className="w-10 h-10 bg-surface-hover rounded-xl flex items-center justify-center border border-border"><Share2 size={18} className="text-indigo-400" /></div>
+                            <h3 className="text-base font-bold text-text-primary tracking-tight">Top Referrers</h3>
                         </div>
-                    ) : (<p style={{ fontSize: "13px", color: "#cbd5e1", textAlign: "center", padding: "16px 0" }}>No data yet</p>)}
-                </motion.div>
-
-                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.7 }}
-                    className="p-5 md:p-6" style={cardStyle}
-                >
-                    <div style={breakdownHeaderStyle}>
-                        <div style={iconBoxStyle}><Share2 size={16} style={{ color: "#64748b" }} /></div>
-                        <h3 style={{ fontSize: "14px", fontWeight: 600, color: "#0f172a" }}>Top Referrers</h3>
-                    </div>
-                    {stats.top_referrers.length > 0 ? (
-                        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                            {stats.top_referrers.slice(0, 5).map((item) => (
-                                <div key={item.referrer} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                    <span style={{ fontSize: "13px", color: "#334155", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "140px" }}>{item.referrer}</span>
-                                    <span style={{ fontSize: "12px", fontWeight: 600, color: "#94a3b8" }}>{item.count}</span>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (<p style={{ fontSize: "13px", color: "#cbd5e1", textAlign: "center", padding: "16px 0" }}>No data yet</p>)}
-                </motion.div>
+                        {stats.top_referrers.length > 0 ? (
+                            <div className="flex flex-col gap-4">
+                                {stats.top_referrers.slice(0, 5).map((item) => (
+                                    <div key={item.referrer} className="flex items-center justify-between group">
+                                        <span className="text-sm text-text-secondary font-medium group-hover:text-text-primary transition-colors overflow-hidden text-ellipsis whitespace-nowrap max-w-[140px]" title={item.referrer}>{item.referrer}</span>
+                                        <span className="text-sm font-bold text-text-primary py-1 px-2.5 bg-surface-hover rounded-lg border border-border group-hover:border-indigo-500/30 transition-colors">{item.count}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (<p className="text-sm text-text-muted text-center py-8">No data yet</p>)}
+                    </motion.div>
+                </div>
             </div>
         </PageTransition>
     );

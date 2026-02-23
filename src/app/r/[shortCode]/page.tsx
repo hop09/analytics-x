@@ -22,28 +22,16 @@ export default async function RedirectPage({ params }: PageProps) {
 
     const headersList = await headers();
     const userAgent = headersList.get("user-agent");
-    const forwardedFor = headersList.get("x-forwarded-for");
     const referer = headersList.get("referer");
 
-    const ip = forwardedFor?.split(",")[0]?.trim() || "unknown";
-
-    fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/clicks`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!,
-            Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
-            Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-            link_id: link.id,
-            user_agent: userAgent || null,
-            country: null,
-            device_type: detectDevice(userAgent),
-            is_bot: false,
-            referrer: referer || null,
-        }),
-    }).catch(() => { });
+    await supabaseAdmin.from("clicks").insert({
+        link_id: link.id,
+        user_agent: userAgent || null,
+        country: null,
+        device_type: detectDevice(userAgent),
+        is_bot: false,
+        referrer: referer || null,
+    });
 
     redirect(link.original_url);
 }

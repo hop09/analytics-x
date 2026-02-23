@@ -153,7 +153,7 @@ export default function LinkAnalyticsClient({ link, stats }: LinkAnalyticsClient
                 <StatCard icon={Bot} label="Bot Hits" value={stats.bot_clicks} delay={0.2} />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-3 md:gap-4 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3 md:gap-4 mb-6">
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
                     className="p-5 md:p-6" style={cardStyle}
                 >

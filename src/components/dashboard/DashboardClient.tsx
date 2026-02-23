@@ -39,7 +39,7 @@ export default function DashboardClient({ stats, recentClicks }: DashboardClient
                 </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-8">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-8">
                 <StatCard icon={MousePointerClick} label="Total Clicks" value={formatNumber(stats.total_clicks)} delay={0} />
                 <StatCard icon={Link2} label="Active Links" value={formatNumber(stats.total_links)} delay={0.05} />
                 <StatCard icon={Users} label="Human Clicks" value={formatNumber(stats.human_clicks)} delay={0.1} />

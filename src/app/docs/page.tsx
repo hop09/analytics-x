@@ -55,7 +55,7 @@ const endpoints: Endpoint[] = [
       "original_url": "https://example.com",
       "custom_title": "My Link",
       "custom_image_url": null,
-      "alt_page_url": null,
+      "mode": "real",
       "created_at": "2026-02-24T12:00:00Z",
       "click_count": 42
     }
@@ -78,11 +78,11 @@ const endpoints: Endpoint[] = [
         description: "Create a new short link. A random short code is generated if not provided.",
         icon: <Plus size={18} />,
         bodyFields: [
-            { name: "original_url", type: "string", required: true, description: "The destination URL to redirect to" },
+            { name: "original_url", type: "string", required: true, description: "The redirect URL (destination)" },
             { name: "short_code", type: "string", required: false, description: "Custom short code (1-50 chars: a-z, A-Z, 0-9, -, _). Auto-generated if omitted" },
-            { name: "custom_title", type: "string", required: false, description: "Custom OG meta title shown to bots" },
-            { name: "custom_image_url", type: "string", required: false, description: "Custom OG image URL shown to bots" },
-            { name: "alt_page_url", type: "string", required: false, description: "Alternative URL bots are redirected to" },
+            { name: "custom_title", type: "string", required: false, description: "Custom OG / social preview title" },
+            { name: "custom_image_url", type: "string", required: false, description: "Custom OG / social preview image URL" },
+            { name: "mode", type: "string", required: false, description: "Link mode: 'real' (redirect) or 'bot' (show meta page). Default: 'real'" },
         ],
         exampleRequest: `curl -X POST ${BASE_PATH}/links \\
   -H "Content-Type: application/json" \\
@@ -98,7 +98,7 @@ const endpoints: Endpoint[] = [
     "original_url": "https://example.com/long-url",
     "custom_title": "My Link Title",
     "custom_image_url": null,
-    "alt_page_url": null,
+    "mode": "real",
     "created_at": "2026-02-24T12:00:00Z"
   }
 }`,
@@ -126,7 +126,7 @@ const endpoints: Endpoint[] = [
     "original_url": "https://example.com",
     "custom_title": null,
     "custom_image_url": null,
-    "alt_page_url": null,
+    "mode": "real",
     "created_at": "2026-02-24T12:00:00Z",
     "stats": {
       "total_clicks": 42,
@@ -143,6 +143,9 @@ const endpoints: Endpoint[] = [
       ],
       "clicks_over_time": [
         { "date": "2026-02-24", "count": 10 }
+      ],
+      "top_user_agents": [
+        { "user_agent": "Mozilla/5.0...", "count": 30, "is_bot": false }
       ]
     }
   }
@@ -163,10 +166,10 @@ const endpoints: Endpoint[] = [
             { name: "id", type: "string (UUID)", required: true, description: "The link ID" },
         ],
         bodyFields: [
-            { name: "original_url", type: "string", required: false, description: "New destination URL" },
-            { name: "custom_title", type: "string | null", required: false, description: "New OG title (null to clear)" },
-            { name: "custom_image_url", type: "string | null", required: false, description: "New OG image URL (null to clear)" },
-            { name: "alt_page_url", type: "string | null", required: false, description: "New alt page URL (null to clear)" },
+            { name: "original_url", type: "string", required: false, description: "New redirect URL" },
+            { name: "custom_title", type: "string | null", required: false, description: "New social preview title (null to clear)" },
+            { name: "custom_image_url", type: "string | null", required: false, description: "New social preview image URL (null to clear)" },
+            { name: "mode", type: "string", required: false, description: "Link mode: 'real' or 'bot'" },
         ],
         exampleRequest: `curl -X PATCH ${BASE_PATH}/links/uuid-1234 \\
   -H "Content-Type: application/json" \\
@@ -178,7 +181,7 @@ const endpoints: Endpoint[] = [
     "original_url": "https://example.com",
     "custom_title": "Updated Title",
     "custom_image_url": null,
-    "alt_page_url": null,
+    "mode": "real",
     "created_at": "2026-02-24T12:00:00Z"
   }
 }`,
@@ -404,8 +407,8 @@ function EndpointCard({ endpoint, index }: { endpoint: Endpoint; index: number }
 /* ── Page ──────────────────────────────────────── */
 export default function ApiDocsPage() {
     return (
-        <div className="min-h-screen bg-background text-text-primary">
-            <div className="max-w-[900px] mx-auto px-4 sm:px-6 py-10 md:py-16">
+        <div className="min-h-dvh bg-background text-text-primary">
+            <div className="max-w-[900px] mx-auto px-3 sm:px-6 py-6 sm:py-10 md:py-16">
                 {/* Header */}
                 <motion.div
                     initial={{ opacity: 0, y: -10 }}

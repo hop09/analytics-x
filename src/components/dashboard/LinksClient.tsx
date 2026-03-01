@@ -2,11 +2,12 @@
 
 import PageTransition from "@/components/ui/PageTransition";
 import CreateLinkModal from "@/components/forms/CreateLinkModal";
+import EditLinkModal from "@/components/forms/EditLinkModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Copy, ExternalLink, Trash2, Search, Link2, Check, BarChart3, Globe, AlertTriangle } from "lucide-react";
+import { Plus, Copy, ExternalLink, Trash2, Search, Link2, Check, BarChart3, Globe, AlertTriangle, Pencil, Users, Bot } from "lucide-react";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
-import { deleteLink } from "@/lib/actions";
-import type { Link } from "@/lib/types";
+import { deleteLink, toggleLinkMode } from "@/lib/actions";
+import type { Link, LinkMode } from "@/lib/types";
 import { timeAgo } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useRealtimeClicks, useRealtimeLinks } from "@/hooks/useRealtime";
@@ -18,9 +19,11 @@ interface LinksClientProps {
 export default function LinksClient({ initialLinks }: LinksClientProps) {
     const [searchQuery, setSearchQuery] = useState("");
     const [showModal, setShowModal] = useState(false);
+    const [editingLink, setEditingLink] = useState<(Link & { click_count: number }) | null>(null);
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+    const [togglingId, setTogglingId] = useState<string | null>(null);
     const searchRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
 
@@ -44,7 +47,8 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                 (link) =>
                     link.short_code.toLowerCase().includes(searchQuery.toLowerCase()) ||
                     (link.custom_title || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    link.original_url.toLowerCase().includes(searchQuery.toLowerCase())
+                    link.original_url.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    (link.bot_redirect_url || "").toLowerCase().includes(searchQuery.toLowerCase())
             ),
         [initialLinks, searchQuery]
     );
@@ -64,33 +68,41 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
         setConfirmDeleteId(null);
     }, [router]);
 
+    const handleToggleMode = useCallback(async (id: string, currentMode: LinkMode) => {
+        setTogglingId(id);
+        const newMode: LinkMode = currentMode === "real" ? "bot" : "real";
+        await toggleLinkMode(id, newMode);
+        router.refresh();
+        setTogglingId(null);
+    }, [router]);
+
     return (
         <PageTransition>
-            <div className="max-w-[1200px] mx-auto space-y-10">
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+            <div className="max-w-[1200px] mx-auto space-y-6 sm:space-y-10">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-6">
                     <div>
-                        <h1 className="text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
+                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
                             Link Center
                         </h1>
-                        <p className="text-sm text-text-muted mt-2">
+                        <p className="text-sm text-text-muted mt-1 sm:mt-2">
                             Manage and track your shortened URLs
                         </p>
                     </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-4 items-center justify-between w-full">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 items-stretch sm:items-center justify-between w-full">
                     <div className="relative w-full sm:max-w-lg group">
-                        <div className="absolute inset-0 bg-indigo-500/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500 -z-10" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 via-purple-500/20 to-indigo-500/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-700 -z-10" />
                         <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none">
-                            <Search className="w-5 h-5 text-text-muted group-focus-within:text-indigo-400 transition-colors" />
+                            <Search className="w-5 h-5 text-text-muted group-focus-within:text-accent-indigo transition-colors duration-300" />
                         </div>
                         <input
                             ref={searchRef}
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Type to search links..."
-                            className="w-full h-14 pl-12 pr-4 bg-surface/50 border border-border rounded-2xl focus:outline-none focus:border-indigo-500/50 text-base text-text-primary shadow-inner backdrop-blur-md transition-all placeholder:text-text-muted/50"
+                            placeholder="Search links..."
+                            className="w-full h-12 sm:h-14 pl-12 pr-4 bg-surface/50 border border-border rounded-2xl focus:outline-none focus:border-indigo-500/40 focus:ring-1 focus:ring-indigo-500/20 text-sm sm:text-base text-text-primary shadow-inner backdrop-blur-md transition-all duration-300 placeholder:text-text-muted/50"
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 hidden md:flex items-center gap-1 pointer-events-none">
                             <kbd className="px-2 py-1 bg-surface-hover rounded-md text-[10px] font-mono text-text-muted border border-border">Ctrl</kbd>
@@ -99,10 +111,10 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                     </div>
 
                     <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
+                        whileHover={{ scale: 1.03, y: -1 }}
+                        whileTap={{ scale: 0.97 }}
                         onClick={() => setShowModal(true)}
-                        className="w-full sm:w-auto h-14 px-8 rounded-2xl flex items-center justify-center gap-2 text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-[0_0_20px_rgba(79,70,229,0.3)] font-semibold shrink-0"
+                        className="w-full sm:w-auto h-12 sm:h-14 px-6 sm:px-8 rounded-2xl flex items-center justify-center gap-2.5 text-white bg-gradient-to-r from-indigo-600 via-indigo-500 to-purple-600 hover:from-indigo-500 hover:via-indigo-400 hover:to-purple-500 transition-all duration-300 shadow-[0_0_24px_rgba(99,102,241,0.3)] hover:shadow-[0_0_32px_rgba(99,102,241,0.45)] font-semibold text-sm sm:text-base shrink-0"
                     >
                         <Plus size={20} />
                         <span>Create Link</span>
@@ -119,28 +131,37 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                 animate={{ opacity: deletingId === link.id ? 0.4 : 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, scale: 0.95 }}
                                 transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.3), ease: [0.25, 0.46, 0.45, 0.94] }}
-                                className="glass-panel p-4 sm:p-5 rounded-2xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col sm:flex-row sm:items-center justify-between gap-5 group"
+                                className="glass-panel p-3 sm:p-5 rounded-2xl hover:-translate-y-0.5 transition-all duration-300 flex flex-col gap-3 sm:gap-5 sm:flex-row sm:items-center justify-between group hover:border-border-hover relative overflow-hidden"
                             >
-                                <div className="flex items-center gap-5 min-w-0 flex-1">
-                                    <div className="w-12 h-12 rounded-xl bg-surface-hover flex items-center justify-center shrink-0 border border-border relative overflow-hidden">
+                                <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                                    {/* Hover glow line */}
+                                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-surface-hover flex items-center justify-center shrink-0 border border-border relative overflow-hidden transition-all duration-300 group-hover:border-indigo-500/30 group-hover:shadow-lg group-hover:shadow-indigo-500/5">
                                         <div className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        <Link2 className="w-5 h-5 text-indigo-400 relative z-10" />
+                                        <Link2 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400 relative z-10" />
                                     </div>
                                     <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-3 flex-wrap mb-1.5">
                                             <span className="text-base font-bold text-text-primary tracking-tight">
                                                 <span className="text-text-muted font-normal select-none">/</span>{link.short_code}
                                             </span>
-                                            {link.custom_title && (
-                                                <span className="text-xs font-semibold text-text-secondary">
-                                                    {link.custom_title}
-                                                </span>
-                                            )}
+                                            {(() => {
+                                                const title = (link.mode || "real") === "bot"
+                                                    ? (link.bot_custom_title || link.custom_title)
+                                                    : link.custom_title;
+                                                return title ? (
+                                                    <span className="text-xs font-semibold text-text-secondary">
+                                                        {title}
+                                                    </span>
+                                                ) : null;
+                                            })()}
                                         </div>
                                         <p className="text-sm text-text-muted truncate mb-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                            {link.original_url}
+                                            {(link.mode || "real") === "bot" && link.bot_redirect_url
+                                                ? link.bot_redirect_url
+                                                : link.original_url}
                                         </p>
-                                        <div className="flex items-center gap-4 text-[11px] font-medium text-text-muted/60">
+                                        <div className="flex items-center gap-4 flex-wrap text-[11px] font-medium text-text-muted/60">
                                             <span className="flex items-center gap-1.5">
                                                 <BarChart3 className="w-3.5 h-3.5" />
                                                 <span className="text-indigo-400">{link.click_count.toLocaleString()} clicks</span>
@@ -152,37 +173,64 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2 shrink-0">
+                                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 overflow-x-auto overflow-x-touch">
+                                    {/* Mode Toggle */}
+                                    <button
+                                        onClick={() => handleToggleMode(link.id, link.mode || "real")}
+                                        disabled={togglingId === link.id}
+                                        className={`h-9 sm:h-10 px-3 sm:px-4 flex items-center justify-center gap-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 border hover:scale-105 active:scale-95 disabled:opacity-50 ${
+                                            (link.mode || "real") === "real"
+                                                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20"
+                                                : "bg-orange-500/10 text-orange-400 border-orange-500/25 hover:bg-orange-500/20"
+                                        }`}
+                                        title={`Mode: ${(link.mode || "real") === "real" ? "Real Visitor" : "Bot"} — click to toggle`}
+                                    >
+                                        {(link.mode || "real") === "real" ? <Users className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
+                                        <span>{(link.mode || "real") === "real" ? "Real" : "Bot"}</span>
+                                    </button>
+                                    <div className="w-px h-6 bg-border mx-0.5 hidden sm:block" />
                                     <button
                                         onClick={() => handleCopy(link.short_code, link.id)}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-surface-active hover:text-text-primary text-text-muted transition-colors border border-transparent hover:border-border"
+                                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-surface-active hover:text-text-primary text-text-muted transition-all duration-200 border border-transparent hover:border-border hover:scale-105 active:scale-95"
                                         title="Copy Link"
                                     >
-                                        {copiedId === link.id ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4" />}
+                                        {copiedId === link.id ? <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400" /> : <Copy className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                                    </button>
+                                    <button
+                                        onClick={() => setEditingLink(link)}
+                                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-surface-active hover:text-text-primary text-text-muted transition-all duration-200 border border-transparent hover:border-border hover:scale-105 active:scale-95"
+                                        title="Edit Link"
+                                    >
+                                        <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
                                     <button
                                         onClick={() => router.push(`/analytics/${link.id}`)}
                                         onMouseEnter={() => router.prefetch(`/analytics/${link.id}`)}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-surface-active hover:text-text-primary text-text-muted transition-colors border border-transparent hover:border-border"
+                                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-indigo-500/10 hover:text-accent-indigo text-text-muted transition-all duration-200 border border-transparent hover:border-indigo-500/20 hover:scale-105 active:scale-95"
                                         title="View Analytics"
                                     >
-                                        <BarChart3 className="w-4 h-4 text-indigo-400" />
+                                        <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
                                     <button
-                                        onClick={() => window.open(link.original_url, "_blank", "noopener,noreferrer")}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-surface-active hover:text-text-primary text-text-muted transition-colors border border-transparent hover:border-border"
+                                        onClick={() => {
+                                            const url = (link.mode || "real") === "bot" && link.bot_redirect_url
+                                                ? link.bot_redirect_url
+                                                : link.original_url;
+                                            window.open(url, "_blank", "noopener,noreferrer");
+                                        }}
+                                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-surface-hover hover:bg-surface-active hover:text-text-primary text-text-muted transition-all duration-200 border border-transparent hover:border-border hover:scale-105 active:scale-95"
                                         title="Open Original URL"
                                     >
-                                        <ExternalLink className="w-4 h-4" />
+                                        <ExternalLink className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
-                                    <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+                                    <div className="w-px h-6 bg-border mx-0.5 hidden sm:block" />
                                     <button
                                         onClick={() => setConfirmDeleteId(link.id)}
                                         disabled={deletingId === link.id}
-                                        className="w-10 h-10 flex items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-colors border border-transparent hover:border-rose-500/20 disabled:opacity-50"
+                                        className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 transition-all duration-200 border border-transparent hover:border-rose-500/20 disabled:opacity-50 hover:scale-105 active:scale-95"
                                         title="Delete Link"
                                     >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                                     </button>
                                 </div>
                             </motion.div>
@@ -234,6 +282,19 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                         onClose={() => setShowModal(false)}
                         onSuccess={() => {
                             setShowModal(false);
+                            router.refresh();
+                        }}
+                    />
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {editingLink && (
+                    <EditLinkModal
+                        link={editingLink}
+                        onClose={() => setEditingLink(null)}
+                        onSuccess={() => {
+                            setEditingLink(null);
                             router.refresh();
                         }}
                     />

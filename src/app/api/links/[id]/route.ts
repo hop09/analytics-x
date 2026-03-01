@@ -10,9 +10,18 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     try {
         const { id } = await context.params;
 
-        const [{ data: link, error: linkError }, { data: clicks }] = await Promise.all([
+        const [
+            { data: link, error: linkError },
+            { count: totalClicks },
+            { count: humanClicks },
+            { count: botClicks },
+            { data: clicks }
+        ] = await Promise.all([
             supabaseAdmin.from("links").select("*").eq("id", id).single(),
-            supabaseAdmin.from("clicks").select("*").eq("link_id", id).order("created_at", { ascending: false }),
+            supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("link_id", id),
+            supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("link_id", id).eq("is_bot", false),
+            supabaseAdmin.from("clicks").select("*", { count: "exact", head: true }).eq("link_id", id).eq("is_bot", true),
+            supabaseAdmin.from("clicks").select("country, device_type, referrer, user_agent, is_bot, created_at").eq("link_id", id).order("created_at", { ascending: false }).limit(50000),
         ]);
 
         if (linkError || !link) {
@@ -20,13 +29,12 @@ export async function GET(_request: NextRequest, context: RouteContext) {
         }
 
         const allClicks = clicks || [];
-        const humanClicks = allClicks.filter((c) => !c.is_bot);
-        const botClicks = allClicks.filter((c) => c.is_bot);
 
         const countryMap = new Map<string, number>();
         const deviceMap = new Map<string, number>();
         const referrerMap = new Map<string, number>();
         const dateMap = new Map<string, number>();
+        const uaMap = new Map<string, { count: number; is_bot: boolean }>();
 
         allClicks.forEach((click) => {
             const country = click.country || "Unknown";
@@ -40,6 +48,16 @@ export async function GET(_request: NextRequest, context: RouteContext) {
 
             const date = new Date(click.created_at).toISOString().split("T")[0];
             dateMap.set(date, (dateMap.get(date) || 0) + 1);
+
+            if (click.user_agent) {
+                const ua = click.user_agent.slice(0, 256);
+                const existing = uaMap.get(ua);
+                if (existing) {
+                    existing.count += 1;
+                } else {
+                    uaMap.set(ua, { count: 1, is_bot: click.is_bot });
+                }
+            }
         });
 
         const sortMap = (map: Map<string, number>) =>
@@ -51,15 +69,19 @@ export async function GET(_request: NextRequest, context: RouteContext) {
             data: {
                 ...link,
                 stats: {
-                    total_clicks: allClicks.length,
-                    human_clicks: humanClicks.length,
-                    bot_clicks: botClicks.length,
+                    total_clicks: totalClicks || 0,
+                    human_clicks: humanClicks || 0,
+                    bot_clicks: botClicks || 0,
                     top_countries: sortMap(countryMap).map(([country, count]) => ({ country, count })),
                     top_devices: sortMap(deviceMap).map(([device, count]) => ({ device, count })),
                     top_referrers: sortMap(referrerMap).map(([referrer, count]) => ({ referrer, count })),
                     clicks_over_time: Array.from(dateMap.entries())
                         .sort((a, b) => a[0].localeCompare(b[0]))
                         .map(([date, count]) => ({ date, count })),
+                    top_user_agents: Array.from(uaMap.entries())
+                        .sort((a, b) => b[1].count - a[1].count)
+                        .slice(0, 20)
+                        .map(([user_agent, { count, is_bot }]) => ({ user_agent, count, is_bot })),
                 },
             },
         });
@@ -74,13 +96,17 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         const { id } = await context.params;
         const body = await request.json();
 
-        const allowedFields = ["original_url", "custom_title", "custom_image_url", "alt_page_url"];
+        const allowedFields = ["original_url", "custom_title", "custom_image_url", "mode"];
         const updates: Record<string, string | null> = {};
 
         for (const field of allowedFields) {
             if (field in body) {
-                const val = body[field];
-                updates[field] = typeof val === "string" && val.trim() ? val.trim() : null;
+                if (field === "mode") {
+                    updates[field] = body[field] === "bot" ? "bot" : "real";
+                } else {
+                    const val = body[field];
+                    updates[field] = typeof val === "string" && val.trim() ? val.trim() : null;
+                }
             }
         }
 

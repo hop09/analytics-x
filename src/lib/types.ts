@@ -1,10 +1,17 @@
+export type LinkMode = "real" | "bot";
+
 export interface Link {
     id: string;
+    user_id: string;
     short_code: string;
     original_url: string;
     custom_title: string | null;
     custom_image_url: string | null;
     alt_page_url: string | null;
+    bot_redirect_url: string | null;
+    bot_custom_title: string | null;
+    bot_custom_image_url: string | null;
+    mode: LinkMode;
     created_at: string;
 }
 
@@ -32,6 +39,7 @@ export interface LinkStats {
     top_devices: { device: string; count: number }[];
     clicks_over_time: { date: string; count: number }[];
     top_referrers: { referrer: string; count: number }[];
+    top_user_agents: { user_agent: string; count: number; is_bot: boolean }[];
 }
 
 export interface DashboardStats {

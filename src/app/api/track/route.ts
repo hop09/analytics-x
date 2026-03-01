@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { isBot, detectDevice } from "@/lib/bot-detector";
+import { detectDevice } from "@/lib/bot-detector";
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,12 +12,21 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "link_id is required" }, { status: 400 });
         }
 
+        // Look up the link's mode to determine is_bot flag
+        const { data: link } = await supabaseAdmin
+            .from("links")
+            .select("mode")
+            .eq("id", link_id)
+            .single();
+
+        const isBotMode = link?.mode === "bot";
+
         const { error } = await supabaseAdmin.from("clicks").insert({
             link_id,
-            user_agent: user_agent || null,
+            user_agent: user_agent ? String(user_agent).slice(0, 512) : null,
             country: null,
             device_type: detectDevice(user_agent),
-            is_bot: isBot(user_agent),
+            is_bot: isBotMode,
             referrer: referrer || null,
         });
 

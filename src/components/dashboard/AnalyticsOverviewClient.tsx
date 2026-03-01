@@ -85,40 +85,41 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
     return (
         <PageTransition>
             <div className="space-y-8">
-                <div className="flex flex-col mb-10">
-                    <h1 className="text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
+                <div className="flex flex-col mb-6 sm:mb-10">
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
                         Analytics
                     </h1>
-                    <p className="text-sm md:text-base text-text-muted mt-2">
+                    <p className="text-sm md:text-base text-text-muted mt-1 sm:mt-2">
                         In-depth traffic insights and link performance metrics
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                     <StatCard icon={MousePointerClick} label="Total Clicks" value={formatNumber(stats.total_clicks)} delay={0} />
                     <StatCard icon={Link2} label="Active Links" value={formatNumber(stats.total_links)} delay={0.1} />
                     <StatCard icon={Users} label="Human Clicks" value={formatNumber(stats.human_clicks)} delay={0.2} />
                     <StatCard icon={Bot} label="Bot Hits" value={formatNumber(stats.bot_clicks)} delay={0.3} />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
-                        className="glass-panel rounded-3xl p-6 lg:p-8 flex flex-col lg:col-span-2 relative overflow-hidden"
+                        className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col lg:col-span-2 relative overflow-hidden group"
                     >
-                        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none" />
+                        <div className="absolute -top-40 -right-40 w-96 h-96 bg-indigo-500/10 blur-[100px] rounded-full pointer-events-none transition-opacity duration-700 group-hover:opacity-150" />
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
 
-                        <div className="flex items-center gap-3 mb-8 relative z-10">
-                            <div className="w-12 h-12 rounded-2xl bg-surface-hover flex items-center justify-center border border-border shrink-0 shadow-inner">
-                                <BarChart3 className="w-5 h-5 text-indigo-400" />
+                        <div className="flex items-center gap-3 mb-4 sm:mb-8 relative z-10">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-surface-hover flex items-center justify-center border border-border shrink-0 shadow-inner">
+                                <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-text-primary tracking-tight">Top Performing Links</h3>
-                                <p className="text-xs text-text-muted mt-0.5">Highest click volume across your network</p>
+                                <h3 className="text-base sm:text-xl font-bold text-text-primary tracking-tight">Top Performing Links</h3>
+                                <p className="text-xs text-text-muted mt-0.5 hidden sm:block">Highest click volume across your network</p>
                             </div>
                         </div>
 
                         {topLinks.length > 0 ? (
-                            <div className="h-80 w-full mt-auto min-w-0 min-h-0 relative z-10">
+                            <div className="h-64 sm:h-80 w-full mt-auto min-w-0 min-h-0 relative z-10">
                                 <ChartErrorBoundary>
                                 <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                                     <BarChart data={topLinks} barSize={32} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
@@ -149,9 +150,10 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
                     </motion.div>
 
                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.4 }}
-                        className="glass-panel rounded-3xl p-6 lg:p-8 flex flex-col relative overflow-hidden"
+                        className="glass-panel rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 flex flex-col relative overflow-hidden group"
                     >
-                        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
+                        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none transition-opacity duration-700 group-hover:opacity-150" />
+                        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-purple-500/20 to-transparent" />
 
                         <div>
                             <h3 className="text-xl font-bold text-text-primary tracking-tight">Traffic Quality</h3>
@@ -185,7 +187,7 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
                                     </ResponsiveContainer>
                                     </ChartErrorBoundary>
                                 </div>
-                                <div className="flex w-full justify-center gap-6 mt-6 bg-surface px-4 py-3 rounded-2xl border border-border">
+                                <div className="flex w-full justify-center gap-4 sm:gap-6 mt-6 bg-surface px-3 sm:px-4 py-2.5 sm:py-3 rounded-2xl border border-border flex-wrap">
                                     {botHumanData.map((entry, index) => (
                                         <div key={entry.name} className="flex items-center gap-2">
                                             <div className="w-3 h-3 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]" style={{ background: PIE_COLORS[index], boxShadow: `0 0 12px ${PIE_COLORS[index]}80` }} />
@@ -207,14 +209,15 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
                 </div>
 
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}
-                    className="glass-panel rounded-[2rem] overflow-hidden flex flex-col"
+                    className="glass-panel rounded-[2rem] overflow-hidden flex flex-col relative"
                 >
-                    <div className="px-8 py-6 border-b border-border/50 flex items-center justify-between bg-surface/30">
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
+                    <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-border/50 flex items-center justify-between bg-surface/30">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center border border-border">
-                                <Activity className="w-5 h-5 text-indigo-400" />
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-surface-hover flex items-center justify-center border border-border">
+                                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-400" />
                             </div>
-                            <h3 className="text-lg font-bold text-text-primary">Links Directory</h3>
+                            <h3 className="text-base sm:text-lg font-bold text-text-primary">Links Directory</h3>
                         </div>
                     </div>
 
@@ -227,10 +230,10 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
                                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") router.push(`/analytics/${link.id}`); }}
                                     role="button"
                                     tabIndex={0}
-                                    className="px-8 py-4 flex items-center justify-between hover:bg-surface-hover/50 cursor-pointer transition-all duration-300 group"
+                                    className="px-3 sm:px-8 py-3 sm:py-4 flex items-center justify-between hover:bg-surface-hover/50 cursor-pointer transition-all duration-300 group relative"
                                     onMouseEnter={() => router.prefetch(`/analytics/${link.id}`)}
                                 >
-                                    <div className="flex items-center gap-5 min-w-0 flex-1">
+                                    <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
                                         <div className="hidden sm:flex w-10 h-10 rounded-xl glass-panel items-center justify-center shrink-0 border-border group-hover:border-indigo-500/30 transition-colors">
                                             <Link2 className="w-4 h-4 text-icon-muted group-hover:text-indigo-400 transition-colors" />
                                         </div>
@@ -241,12 +244,12 @@ export default function AnalyticsOverviewClient({ stats, links }: AnalyticsOverv
                                             <p className="hidden sm:block text-xs text-text-muted truncate mt-1 group-hover:text-text-secondary transition-colors">{link.original_url}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-4 shrink-0 ml-4">
+                                    <div className="flex items-center gap-2 sm:gap-4 shrink-0 ml-2 sm:ml-4">
                                         <div className="flex items-baseline gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border group-hover:border-indigo-500/20 transition-colors">
                                             <span className="text-sm font-bold text-text-primary group-hover:text-indigo-400 transition-colors">{link.click_count.toLocaleString()}</span>
                                             <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-wider text-text-muted">clicks</span>
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center group-hover:bg-indigo-500 group-hover:text-white text-icon-muted transition-colors border border-border group-hover:border-indigo-500">
+                                        <div className="w-8 h-8 rounded-full bg-surface flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-indigo-500 group-hover:to-purple-500 group-hover:text-white text-icon-muted transition-all duration-300 border border-border group-hover:border-indigo-500 group-hover:shadow-lg group-hover:shadow-indigo-500/20">
                                             <ArrowRight className="w-4 h-4" />
                                         </div>
                                     </div>

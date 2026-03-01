@@ -30,25 +30,25 @@ export default function DashboardClient({ stats, recentClicks }: DashboardClient
 
     return (
         <PageTransition>
-            <div className="flex flex-col mb-10">
+            <div className="flex flex-col mb-6 sm:mb-10">
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.5 }}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-4 w-max"
+                    className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold mb-3 sm:mb-4 w-max shimmer-border"
                 >
-                    <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
                     Live Analytics
                 </motion.div>
-                <h1 className="text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold heading-gradient tracking-tight">
                     Overview
                 </h1>
-                <p className="text-sm md:text-base text-text-muted mt-2">
+                <p className="text-sm md:text-base text-text-muted mt-1 sm:mt-2">
                     Real-time insights across your entire link network
                 </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6">
                 <div className="lg:col-span-1">
                     <StatCard icon={MousePointerClick} label="Total Clicks" value={formatNumber(stats.total_clicks)} delay={0} />
                 </div>
@@ -66,14 +66,17 @@ export default function DashboardClient({ stats, recentClicks }: DashboardClient
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.6, delay: 0.4 }}
-                    className="glass-panel overflow-hidden rounded-[2rem] lg:col-span-4 flex flex-col min-h-[400px]"
+                    className="glass-panel overflow-hidden rounded-[2rem] lg:col-span-4 flex flex-col min-h-[400px] relative"
                 >
-                    <div className="px-8 py-6 border-b border-border/50 flex items-center justify-between bg-surface/30">
+                    {/* Top shimmer line */}
+                    <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent" />
+
+                    <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-border/50 flex items-center justify-between bg-surface/30">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-surface-hover flex items-center justify-center border border-border">
-                                <Activity className="w-5 h-5 text-text-secondary" />
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-surface-hover flex items-center justify-center border border-border">
+                                <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-text-secondary" />
                             </div>
-                            <h2 className="text-lg font-bold text-text-primary">Global Activity Stream</h2>
+                            <h2 className="text-base sm:text-lg font-bold text-text-primary">Global Activity Stream</h2>
                         </div>
                     </div>
 
@@ -94,16 +97,16 @@ export default function DashboardClient({ stats, recentClicks }: DashboardClient
                                 {recentClicks.map((click, index) => (
                                     <motion.div
                                         key={click.id}
-                                        initial={{ opacity: 0, x: -10 }}
+                                        initial={{ opacity: 0, x: -20 }}
                                         animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: 0.5 + index * 0.05 }}
-                                        className="group px-8 py-4 flex items-center justify-between hover:bg-surface-hover/50 transition-all duration-300 cursor-default"
+                                        transition={{ delay: 0.5 + index * 0.05, ease: [0.25, 0.46, 0.45, 0.94] }}
+                                        className="group px-3 sm:px-8 py-3 sm:py-4 flex items-center justify-between hover:bg-surface-hover/50 transition-all duration-300 cursor-default relative"
                                     >
-                                        <div className="flex items-center gap-5 min-w-0 flex-1">
-                                            <div className="relative shrink-0">
+                                        <div className="flex items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                                            <div className="relative shrink-0 hidden xs:block">
                                                 <div className={`absolute inset-0 blur-md rounded-full opacity-0 group-hover:opacity-50 transition-opacity duration-500 ${click.is_bot ? "bg-rose-500" : "bg-emerald-500"}`} />
-                                                <div className={`w-10 h-10 rounded-xl glass-panel flex items-center justify-center relative z-10 ${click.is_bot ? "text-rose-400 border-rose-500/20" : "text-emerald-400 border-emerald-500/20"}`}>
-                                                    {click.is_bot ? <Bot className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                                                <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl glass-panel flex items-center justify-center relative z-10 ${click.is_bot ? "text-rose-400 border-rose-500/20" : "text-emerald-400 border-emerald-500/20"}`}>
+                                                    {click.is_bot ? <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                                                 </div>
                                             </div>
 
@@ -112,23 +115,23 @@ export default function DashboardClient({ stats, recentClicks }: DashboardClient
                                                     <span className="text-text-muted select-none">/</span>
                                                     {click.links?.short_code || "unknown"}
                                                 </p>
-                                                <div className="flex items-center gap-2 mt-1.5">
-                                                    <Globe className="w-3.5 h-3.5 text-text-muted" />
-                                                    <span className="text-xs font-medium text-text-secondary">{click.country || "Unknown Origin"}</span>
-                                                    <span className="text-text-muted/50 text-[10px]">&bull;</span>
-                                                    <span className="text-xs font-medium text-text-secondary truncate">{click.referrer || "Direct"}</span>
+                                                <div className="flex items-center gap-1.5 sm:gap-2 mt-1 sm:mt-1.5 flex-wrap">
+                                                    <Globe className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-text-muted" />
+                                                    <span className="text-[11px] sm:text-xs font-medium text-text-secondary">{click.country || "Unknown"}</span>
+                                                    <span className="text-text-muted/50 text-[10px] hidden sm:inline">&bull;</span>
+                                                    <span className="text-[11px] sm:text-xs font-medium text-text-secondary truncate hidden sm:inline">{click.referrer || "Direct"}</span>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-col items-end gap-1.5 shrink-0 ml-4">
-                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider border ${click.is_bot
+                                        <div className="flex flex-col items-end gap-1 sm:gap-1.5 shrink-0 ml-2 sm:ml-4">
+                                            <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-bold uppercase tracking-wider border ${click.is_bot
                                                 ? "bg-rose-500/10 text-rose-400 border-rose-500/20"
                                                 : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                                 }`}>
-                                                {click.is_bot ? "Automated" : click.device_type || "Unknown Dev"}
+                                                {click.is_bot ? "Bot" : click.device_type || "Human"}
                                             </span>
-                                            <span className="text-xs font-medium text-text-muted font-mono opacity-60">
+                                            <span className="text-[10px] sm:text-xs font-medium text-text-muted font-mono opacity-60">
                                                 {timeAgo(click.created_at)}
                                             </span>
                                         </div>

@@ -1,15 +1,15 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Link2, Type, ImageIcon, Wand2, Users, Bot, Upload, Loader2 } from "lucide-react";
+import { X, Link2, Type, ImageIcon, Wand2, Loader2, Users, Bot, Upload } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { createLink } from "@/lib/actions";
-import { generateShortCode } from "@/lib/utils";
+import { updateLink } from "@/lib/actions";
 import { uploadImage, compressImage } from "@/lib/image-utils";
-import type { LinkMode } from "@/lib/types";
+import type { Link, LinkMode } from "@/lib/types";
 
-interface CreateLinkModalProps {
+interface EditLinkModalProps {
+    link: Link;
     onClose: () => void;
     onSuccess: () => void;
 }
@@ -22,15 +22,27 @@ interface ModeData {
     imageFile: File | null;
 }
 
-const emptyModeData = (): ModeData => ({ redirectUrl: "", title: "", imageUrl: "", imagePreview: null, imageFile: null });
-
-export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalProps) {
+export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModalProps) {
     const [mounted, setMounted] = useState(false);
-    const [shortCode, setShortCode] = useState("");
-    const [mode, setMode] = useState<LinkMode>("real");
+    const [shortCode, setShortCode] = useState(link.short_code);
+    const [mode, setMode] = useState<LinkMode>(link.mode || "real");
+
+    // Initialize each mode with its own data from the database
     const [perMode, setPerMode] = useState<Record<LinkMode, ModeData>>({
-        real: emptyModeData(),
-        bot: emptyModeData(),
+        real: {
+            redirectUrl: link.original_url || "",
+            title: link.custom_title || "",
+            imageUrl: link.custom_image_url || "",
+            imagePreview: link.custom_image_url || null,
+            imageFile: null,
+        },
+        bot: {
+            redirectUrl: link.bot_redirect_url || "",
+            title: link.bot_custom_title || "",
+            imageUrl: link.bot_custom_image_url || "",
+            imagePreview: link.bot_custom_image_url || null,
+            imageFile: null,
+        },
     });
     const [uploading, setUploading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -44,10 +56,6 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
     const setCurrent = (patch: Partial<ModeData>) =>
         setPerMode((prev) => ({ ...prev, [mode]: { ...prev[mode], ...patch } }));
 
-    const handleGenerate = () => {
-        setShortCode(generateShortCode());
-    };
-
     const handleImageSelect = async (file: File) => {
         if (!file.type.startsWith("image/")) {
             setError("Please select an image file");
@@ -55,11 +63,9 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
         }
 
         try {
-            // Show preview immediately
             const previewUrl = URL.createObjectURL(file);
             setCurrent({ imagePreview: previewUrl });
 
-            // Compress the image
             const compressed = await compressImage(file);
             setCurrent({ imageFile: compressed, imagePreview: previewUrl });
 
@@ -85,7 +91,9 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
     };
 
     const handleRemoveImage = () => {
-        if (current.imagePreview) URL.revokeObjectURL(current.imagePreview);
+        if (current.imagePreview && !current.imagePreview.startsWith("http")) {
+            URL.revokeObjectURL(current.imagePreview);
+        }
         setCurrent({ imagePreview: null, imageFile: null, imageUrl: "" });
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -102,12 +110,16 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
             return;
         }
 
-        const code = shortCode.trim() || generateShortCode();
+        if (!shortCode.trim()) {
+            setError("Short code is required");
+            return;
+        }
+
         setLoading(true);
 
         try {
             setUploading(true);
-            // Upload images for both modes if selected
+            // Upload images for both modes if new files were selected
             let realImageUrl = realData.imageUrl;
             if (realData.imageFile) {
                 realImageUrl = await uploadImage(realData.imageFile);
@@ -119,14 +131,14 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
             }
             setUploading(false);
 
-            const result = await createLink({
-                short_code: code,
+            const result = await updateLink(link.id, {
+                short_code: shortCode.trim(),
                 original_url: realData.redirectUrl.trim(),
-                custom_title: realData.title.trim() || undefined,
-                custom_image_url: realImageUrl.trim() || undefined,
-                bot_redirect_url: botData.redirectUrl.trim() || undefined,
-                bot_custom_title: botData.title.trim() || undefined,
-                bot_custom_image_url: botImageUrl.trim() || undefined,
+                custom_title: realData.title.trim() || null,
+                custom_image_url: realImageUrl.trim() || null,
+                bot_redirect_url: botData.redirectUrl.trim() || null,
+                bot_custom_title: botData.title.trim() || null,
+                bot_custom_image_url: botImageUrl.trim() || null,
                 mode,
             });
 
@@ -169,10 +181,10 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
                     transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
                     className="relative w-full max-w-[480px] glass-panel bg-surface border-border rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] pointer-events-auto"
                 >
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-indigo-500/20 blur-[40px] rounded-full pointer-events-none" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-24 bg-purple-500/20 blur-[40px] rounded-full pointer-events-none" />
 
                 <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border/50 relative z-10 shrink-0">
-                    <h2 className="text-lg sm:text-xl font-bold text-text-primary tracking-tight">Create Short Link</h2>
+                    <h2 className="text-xl font-bold text-text-primary tracking-tight">Edit Link</h2>
                     <motion.button
                         whileHover={{ scale: 1.1 }}
                         whileTap={{ scale: 0.9 }}
@@ -212,22 +224,14 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
                                 <Wand2 size={14} className="text-purple-400" />
                                 <span>Short Code</span>
                             </div>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={shortCode}
-                                    onChange={(e) => setShortCode(e.target.value)}
-                                    placeholder="custom-alias"
-                                    className={`${inputClasses} flex-1`}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={handleGenerate}
-                                    className="h-12 px-5 rounded-xl border border-border bg-surface-hover hover:bg-surface-active text-text-primary text-xs font-bold transition-colors shrink-0"
-                                >
-                                    Auto
-                                </button>
-                            </div>
+                            <input
+                                type="text"
+                                value={shortCode}
+                                onChange={(e) => setShortCode(e.target.value)}
+                                placeholder="custom-alias"
+                                required
+                                className={inputClasses}
+                            />
                         </div>
 
                         {/* Mode Toggle */}
@@ -389,10 +393,10 @@ export default function CreateLinkModal({ onClose, onSuccess }: CreateLinkModalP
                             {loading ? (
                                 <>
                                     <Loader2 size={18} className="animate-spin" />
-                                    {uploading ? "Uploading image…" : "Creating…"}
+                                    {uploading ? "Uploading image…" : "Saving…"}
                                 </>
                             ) : (
-                                "Create Link"
+                                "Save Changes"
                             )}
                         </motion.button>
                     </form>

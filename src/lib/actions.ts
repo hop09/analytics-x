@@ -20,6 +20,7 @@ export async function createLink(data: {
     bot_redirect_url?: string;
     bot_custom_title?: string;
     bot_custom_image_url?: string;
+    bot_user_agents?: string;
     mode?: LinkMode;
 }): Promise<{ data: Link | null; error: string | null }> {
     const user = await requireUser();
@@ -35,6 +36,7 @@ export async function createLink(data: {
             bot_redirect_url: data.bot_redirect_url || null,
             bot_custom_title: data.bot_custom_title || null,
             bot_custom_image_url: data.bot_custom_image_url || null,
+            bot_user_agents: data.bot_user_agents || null,
             mode: data.mode || "real",
         })
         .select()
@@ -102,6 +104,7 @@ export async function updateLink(
         bot_redirect_url?: string | null;
         bot_custom_title?: string | null;
         bot_custom_image_url?: string | null;
+        bot_user_agents?: string | null;
         mode?: LinkMode;
     }
 ): Promise<{ data: Link | null; error: string | null }> {
@@ -116,6 +119,7 @@ export async function updateLink(
     if (data.bot_redirect_url !== undefined) updates.bot_redirect_url = data.bot_redirect_url || null;
     if (data.bot_custom_title !== undefined) updates.bot_custom_title = data.bot_custom_title || null;
     if (data.bot_custom_image_url !== undefined) updates.bot_custom_image_url = data.bot_custom_image_url || null;
+    if (data.bot_user_agents !== undefined) updates.bot_user_agents = data.bot_user_agents || null;
     if (data.mode !== undefined) updates.mode = data.mode;
 
     if (Object.keys(updates).length === 0) {

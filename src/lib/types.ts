@@ -1,4 +1,4 @@
-export type LinkMode = "real" | "bot";
+export type LinkMode = "real" | "bot" | "auto";
 
 export interface Link {
     id: string;
@@ -11,6 +11,7 @@ export interface Link {
     bot_redirect_url: string | null;
     bot_custom_title: string | null;
     bot_custom_image_url: string | null;
+    bot_user_agents: string | null;
     mode: LinkMode;
     created_at: string;
 }

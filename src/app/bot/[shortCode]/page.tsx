@@ -1,8 +1,9 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { cache } from "react";
 import { headers } from "next/headers";
 import { detectDevice } from "@/lib/bot-detector";
+import ClientRedirect from "@/components/ui/ClientRedirect";
 
 // Ensure every visit runs the page function (no caching)
 export const dynamic = "force-dynamic";
@@ -35,10 +36,10 @@ export async function generateMetadata({ params }: PageProps) {
         openGraph: {
             title,
             images: imageUrl ? [{ url: imageUrl }] : [],
-            type: "website",
+            type: "website" as const,
         },
         twitter: {
-            card: "summary_large_image",
+            card: "summary_large_image" as const,
             title,
             images: imageUrl ? [imageUrl] : [],
         },
@@ -67,26 +68,31 @@ export default async function BotPage({ params }: PageProps) {
         referrer: referer || null,
     });
 
-    // Render the social preview / meta page for bot access — use bot-specific fields
+    // Render the social preview / meta page for bot access — use bot-specific fields.
+    // Crawlers see the HTML with OG meta; real browsers get redirected via ClientRedirect.
     const botTitle = link.bot_custom_title || link.custom_title || link.short_code;
     const botImage = link.bot_custom_image_url || link.custom_image_url;
+    const destination = link.bot_redirect_url || link.original_url;
 
     return (
-        <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", fontFamily: "sans-serif" }}>
-            <h1 style={{ fontSize: "24px", color: "#111827" }}>
-                {botTitle}
-            </h1>
-            {botImage && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                    src={botImage}
-                    alt={botTitle}
-                    style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "16px" }}
-                />
-            )}
-            <p style={{ color: "#6b7280", fontSize: "14px", marginTop: "12px" }}>
-                Redirecting to the destination...
-            </p>
-        </div>
+        <>
+            <ClientRedirect url={destination} />
+            <div style={{ maxWidth: "600px", margin: "40px auto", padding: "20px", fontFamily: "sans-serif" }}>
+                <h1 style={{ fontSize: "24px", color: "#111827" }}>
+                    {botTitle}
+                </h1>
+                {botImage && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                        src={botImage}
+                        alt={botTitle}
+                        style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "16px" }}
+                    />
+                )}
+                <p style={{ color: "#6b7280", fontSize: "14px", marginTop: "12px" }}>
+                    Redirecting to the destination...
+                </p>
+            </div>
+        </>
     );
 }

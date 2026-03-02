@@ -41,6 +41,24 @@ export function isBot(userAgent: string | null | undefined): boolean {
     return botRegex.test(userAgent);
 }
 
+/**
+ * Check if user-agent matches any of the custom bot patterns (comma-separated).
+ * Used for "auto" mode where users define their own bot UA patterns.
+ */
+export function matchesCustomBotPatterns(
+    userAgent: string | null | undefined,
+    patterns: string | null | undefined
+): boolean {
+    if (!userAgent || !patterns) return false;
+    const patternList = patterns
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean);
+    if (patternList.length === 0) return false;
+    const ua = userAgent.toLowerCase();
+    return patternList.some((pattern) => ua.includes(pattern.toLowerCase()));
+}
+
 export function detectDevice(userAgent: string | null | undefined): string {
     if (!userAgent) return "Unknown";
 

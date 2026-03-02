@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Link2, Type, ImageIcon, Wand2, Loader2, Users, Bot, Upload } from "lucide-react";
+import { X, Link2, Type, ImageIcon, Wand2, Loader2, Users, Bot, Upload, Radar } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { updateLink } from "@/lib/actions";
@@ -26,6 +26,7 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
     const [mounted, setMounted] = useState(false);
     const [shortCode, setShortCode] = useState(link.short_code);
     const [mode, setMode] = useState<LinkMode>(link.mode || "real");
+    const [botUserAgents, setBotUserAgents] = useState(link.bot_user_agents || "");
 
     // Initialize each mode with its own data from the database
     const [perMode, setPerMode] = useState<Record<LinkMode, ModeData>>({
@@ -37,6 +38,13 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
             imageFile: null,
         },
         bot: {
+            redirectUrl: link.bot_redirect_url || "",
+            title: link.bot_custom_title || "",
+            imageUrl: link.bot_custom_image_url || "",
+            imagePreview: link.bot_custom_image_url || null,
+            imageFile: null,
+        },
+        auto: {
             redirectUrl: link.bot_redirect_url || "",
             title: link.bot_custom_title || "",
             imageUrl: link.bot_custom_image_url || "",
@@ -139,6 +147,7 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
                 bot_redirect_url: botData.redirectUrl.trim() || null,
                 bot_custom_title: botData.title.trim() || null,
                 bot_custom_image_url: botImageUrl.trim() || null,
+                bot_user_agents: mode === "auto" ? botUserAgents.trim() || null : null,
                 mode,
             });
 
@@ -201,7 +210,7 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
                         <div>
                             <div className={labelClasses}>
                                 <Link2 size={14} className="text-indigo-400" />
-                                <span>{mode === "real" ? "Real Visitor Redirect URL" : "Bot Mode Redirect URL"}</span>
+                                <span>{mode === "real" ? "Real Visitor Redirect URL" : mode === "bot" ? "Bot Mode Redirect URL" : "Auto Detect Redirect URL"}</span>
                             </div>
                             <input
                                 type="url"
@@ -214,7 +223,9 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
                             <p className="text-[10px] text-text-muted mt-1 leading-relaxed">
                                 {mode === "real"
                                     ? "Where real visitors get redirected when clicking the link."
-                                    : "Optional URL for bot/crawler landing page. Leave empty for a static preview page."}
+                                    : mode === "bot"
+                                    ? "Optional URL for bot/crawler landing page. Leave empty for a static preview page."
+                                    : "URL for detected bots/crawlers. Real visitors use the Real Visitor URL."}
                             </p>
                         </div>
 
@@ -237,41 +248,75 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
                         {/* Mode Toggle */}
                         <div>
                             <div className={labelClasses}>
-                                {mode === "real" ? <Users size={14} className="text-emerald-400" /> : <Bot size={14} className="text-orange-400" />}
+                                {mode === "real" ? <Users size={14} className="text-emerald-400" /> : mode === "bot" ? <Bot size={14} className="text-orange-400" /> : <Radar size={14} className="text-sky-400" />}
                                 <span>Link Mode</span>
                             </div>
-                            <div className="flex items-center gap-2 p-1 bg-surface/50 border border-border rounded-xl">
+                            <div className="flex items-center gap-1 p-1 bg-surface/50 border border-border rounded-xl">
                                 <button
                                     type="button"
                                     onClick={() => setMode("real")}
-                                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-xs font-bold transition-all duration-300 ${
+                                    className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg text-[11px] font-bold transition-all duration-300 ${
                                         mode === "real"
                                             ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm"
                                             : "text-text-muted hover:text-text-secondary border border-transparent"
                                     }`}
                                 >
-                                    <Users size={14} />
-                                    Real Visitor
+                                    <Users size={13} />
+                                    Real
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => setMode("bot")}
-                                    className={`flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-xs font-bold transition-all duration-300 ${
+                                    className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg text-[11px] font-bold transition-all duration-300 ${
                                         mode === "bot"
                                             ? "bg-orange-500/15 text-orange-400 border border-orange-500/30 shadow-sm"
                                             : "text-text-muted hover:text-text-secondary border border-transparent"
                                     }`}
                                 >
-                                    <Bot size={14} />
-                                    Bot Mode
+                                    <Bot size={13} />
+                                    Bot
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setMode("auto")}
+                                    className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-lg text-[11px] font-bold transition-all duration-300 ${
+                                        mode === "auto"
+                                            ? "bg-sky-500/15 text-sky-400 border border-sky-500/30 shadow-sm"
+                                            : "text-text-muted hover:text-text-secondary border border-transparent"
+                                    }`}
+                                >
+                                    <Radar size={13} />
+                                    Auto
                                 </button>
                             </div>
                             <p className="text-[10px] text-text-muted mt-1.5 leading-relaxed">
                                 {mode === "real"
                                     ? "Visitors are redirected to the URL. Social preview is shown only when the link is shared on social media."
-                                    : "No redirect — everyone sees a landing page with the social preview below."}
+                                    : mode === "bot"
+                                    ? "No redirect — everyone sees a landing page with the social preview below."
+                                    : "Automatically detects bots by user-agent. Bots see meta/preview, real visitors get redirected."}
                             </p>
                         </div>
+
+                        {/* Custom Bot User Agents (auto mode only) */}
+                        {mode === "auto" && (
+                            <div>
+                                <div className={labelClasses}>
+                                    <Radar size={14} className="text-sky-400" />
+                                    <span>Custom Bot User Agents</span>
+                                </div>
+                                <textarea
+                                    value={botUserAgents}
+                                    onChange={(e) => setBotUserAgents(e.target.value)}
+                                    placeholder="googlebot, bingbot, twitterbot, facebookexternalhit"
+                                    rows={3}
+                                    className="w-full px-4 py-3 bg-surface/50 border border-border rounded-xl focus:outline-none focus:border-sky-500/50 focus:ring-1 focus:ring-sky-500/50 text-sm text-text-primary placeholder:text-text-muted/50 transition-all font-mono resize-none"
+                                />
+                                <p className="text-[10px] text-text-muted mt-1 leading-relaxed">
+                                    Comma-separated keywords to match against user-agent strings. Built-in bot patterns are always checked too.
+                                </p>
+                            </div>
+                        )}
 
                         {/* Social Preview Title */}
                         <div>
@@ -289,7 +334,7 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
                             <p className="text-[10px] text-text-muted mt-1 leading-relaxed">
                                 {mode === "real"
                                     ? "Appears when the link is shared on Twitter, Discord, Slack, etc."
-                                    : "Displayed as a heading on the meta landing page all visitors see."}
+                                    : "Displayed as a heading on the meta landing page bots/crawlers see."}
                             </p>
                         </div>
 
@@ -302,7 +347,7 @@ export default function EditLinkModal({ link, onClose, onSuccess }: EditLinkModa
                             <p className="text-[10px] text-text-muted mb-2 leading-relaxed">
                                 {mode === "real"
                                     ? "Thumbnail shown in link previews on social platforms."
-                                    : "Hero image displayed on the meta landing page."}
+                                    : "Hero image displayed on the meta landing page for bots/crawlers."}
                             </p>
 
                             <input

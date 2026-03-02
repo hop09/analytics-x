@@ -4,7 +4,7 @@ import PageTransition from "@/components/ui/PageTransition";
 import CreateLinkModal from "@/components/forms/CreateLinkModal";
 import EditLinkModal from "@/components/forms/EditLinkModal";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Copy, ExternalLink, Trash2, Search, Link2, Check, BarChart3, Globe, AlertTriangle, Pencil, Users, Bot } from "lucide-react";
+import { Plus, Copy, ExternalLink, Trash2, Search, Link2, Check, BarChart3, Globe, AlertTriangle, Pencil, Users, Bot, Radar } from "lucide-react";
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { deleteLink, toggleLinkMode } from "@/lib/actions";
 import type { Link, LinkMode } from "@/lib/types";
@@ -70,7 +70,7 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
 
     const handleToggleMode = useCallback(async (id: string, currentMode: LinkMode) => {
         setTogglingId(id);
-        const newMode: LinkMode = currentMode === "real" ? "bot" : "real";
+        const newMode: LinkMode = currentMode === "real" ? "bot" : currentMode === "bot" ? "auto" : "real";
         await toggleLinkMode(id, newMode);
         router.refresh();
         setTogglingId(null);
@@ -146,7 +146,8 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                                 <span className="text-text-muted font-normal select-none">/</span>{link.short_code}
                                             </span>
                                             {(() => {
-                                                const title = (link.mode || "real") === "bot"
+                                                const m = link.mode || "real";
+                                                const title = m === "bot" || m === "auto"
                                                     ? (link.bot_custom_title || link.custom_title)
                                                     : link.custom_title;
                                                 return title ? (
@@ -157,7 +158,7 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                             })()}
                                         </div>
                                         <p className="text-sm text-text-muted truncate mb-1 opacity-70 group-hover:opacity-100 transition-opacity">
-                                            {(link.mode || "real") === "bot" && link.bot_redirect_url
+                                            {((link.mode || "real") === "bot" || (link.mode || "real") === "auto") && link.bot_redirect_url
                                                 ? link.bot_redirect_url
                                                 : link.original_url}
                                         </p>
@@ -181,12 +182,14 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                         className={`h-9 sm:h-10 px-3 sm:px-4 flex items-center justify-center gap-1.5 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-all duration-300 border hover:scale-105 active:scale-95 disabled:opacity-50 ${
                                             (link.mode || "real") === "real"
                                                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20"
-                                                : "bg-orange-500/10 text-orange-400 border-orange-500/25 hover:bg-orange-500/20"
+                                                : (link.mode || "real") === "bot"
+                                                ? "bg-orange-500/10 text-orange-400 border-orange-500/25 hover:bg-orange-500/20"
+                                                : "bg-sky-500/10 text-sky-400 border-sky-500/25 hover:bg-sky-500/20"
                                         }`}
-                                        title={`Mode: ${(link.mode || "real") === "real" ? "Real Visitor" : "Bot"} — click to toggle`}
+                                        title={`Mode: ${(link.mode || "real") === "real" ? "Real Visitor" : (link.mode || "real") === "bot" ? "Bot" : "Auto Detect"} — click to toggle`}
                                     >
-                                        {(link.mode || "real") === "real" ? <Users className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
-                                        <span>{(link.mode || "real") === "real" ? "Real" : "Bot"}</span>
+                                        {(link.mode || "real") === "real" ? <Users className="w-3.5 h-3.5" /> : (link.mode || "real") === "bot" ? <Bot className="w-3.5 h-3.5" /> : <Radar className="w-3.5 h-3.5" />}
+                                        <span>{(link.mode || "real") === "real" ? "Real" : (link.mode || "real") === "bot" ? "Bot" : "Auto"}</span>
                                     </button>
                                     <div className="w-px h-6 bg-border mx-0.5 hidden sm:block" />
                                     <button
@@ -213,7 +216,8 @@ export default function LinksClient({ initialLinks }: LinksClientProps) {
                                     </button>
                                     <button
                                         onClick={() => {
-                                            const url = (link.mode || "real") === "bot" && link.bot_redirect_url
+                                            const m = link.mode || "real";
+                                            const url = (m === "bot" || m === "auto") && link.bot_redirect_url
                                                 ? link.bot_redirect_url
                                                 : link.original_url;
                                             window.open(url, "_blank", "noopener,noreferrer");
